@@ -1,0 +1,7 @@
+cd .\IDoctorBackend
+dotnet ef migrations add initial
+PM> dotnet ef migrations add initial --project D:\Project\IDoctorBackend\IDoctorMicroservice\IDoctorBackend.csproj
+
+dotnet ef database update --project D:\Project\IDoctorBackend\IDoctorMicroservice\IDoctorBackend.csproj
+
+
