@@ -314,39 +314,45 @@ namespace IWeddySupport.Service
             bool isNumeric = int.TryParse(key, out int numericKey);
 
             // Initial profile query
-            var profiles = await _profileRepository.FindAsync(p =>
-                (!string.IsNullOrEmpty(p.SkinTone) && p.SkinTone.Contains(key, StringComparison.OrdinalIgnoreCase)) ||
-                (!string.IsNullOrEmpty(p.BloodGroup) && p.BloodGroup.Contains(key, StringComparison.OrdinalIgnoreCase)) ||
-                (!string.IsNullOrEmpty(p.Occupation) && p.Occupation.Contains(key, StringComparison.OrdinalIgnoreCase)) ||
-                (!string.IsNullOrEmpty(p.Religion) && p.Religion.Contains(key, StringComparison.OrdinalIgnoreCase)) ||
-                (!string.IsNullOrEmpty(p.MaritalStatus) && p.MaritalStatus.Contains(key, StringComparison.OrdinalIgnoreCase)) ||
-                (!string.IsNullOrEmpty(p.MotherOccupationDetails) && p.MotherOccupationDetails.Contains(key, StringComparison.OrdinalIgnoreCase)) ||
-                (!string.IsNullOrEmpty(p.Gender) && p.Gender.Contains(key, StringComparison.OrdinalIgnoreCase))
+            var profiles =await  _profileRepository.FindAsync(p =>
+                (!string.IsNullOrEmpty(p.SkinTone) && p.SkinTone.ToLower().Contains(key.ToLower())) ||
+                (!string.IsNullOrEmpty(p.BloodGroup) && p.BloodGroup.ToLower().Contains(key.ToLower())) ||
+                (!string.IsNullOrEmpty(p.Occupation) && p.Occupation.ToLower().Contains(key.ToLower())) ||
+                (!string.IsNullOrEmpty(p.Religion) && p.Religion.ToLower().Contains(key.ToLower())) ||
+                (!string.IsNullOrEmpty(p.MaritalStatus) && p.MaritalStatus.ToLower().Contains(key.ToLower())) ||
+                (!string.IsNullOrEmpty(p.MotherOccupationDetails) && p.MotherOccupationDetails.ToLower().Contains(key.ToLower())) ||
+                 (!string.IsNullOrEmpty(p.FatherOccupationDetails) && p.MotherOccupationDetails.ToLower().Contains(key.ToLower()))||
+                (!string.IsNullOrEmpty(p.Gender) && p.Gender.ToLower().Contains(key.ToLower()))
             );
 
             // If the key is numeric, add height, age, and salary-based filters
-            if (isNumeric && profiles == null)
+            if (isNumeric)
             {
-                profiles = profiles.Where(p =>
+                profiles =profiles.Where(p =>
                     (p.DateOfBirth != default(DateTime) &&
                      Math.Abs(DateTime.Now.Year - p.DateOfBirth.Year) >= numericKey - 2 &&
                      Math.Abs(DateTime.Now.Year - p.DateOfBirth.Year) <= numericKey + 2) ||
                     (TryParseSalary(p.YearlySalary, out var parsedSalary) &&
-                     parsedSalary >= numericKey - 10000 && parsedSalary <= numericKey + 10000) ||
-                    (TryParseHeight(p.Height, out var parsedHeight) &&
-                     parsedHeight >= numericKey - 5 && parsedHeight <= numericKey + 5)
-                ).ToList();
+                     parsedSalary >= numericKey - 10000 && parsedSalary <= numericKey + 10000)).ToList();
+            }
+            if(TryParseHeight(key, out var parsedHeight))
+            {
+                profiles = profiles.Where(p =>
+                   (TryParseHeight(p.Height, out var parsedHeight) &&
+                    parsedHeight >= numericKey - 5 && parsedHeight <= numericKey + 5)
+               ).ToList();
             }
 
             // Search in AddressRepository if profiles list is still null or empty
             if (profiles == null || !profiles.Any())
             {
                 var addressResults = await _addressRepository.FindAsync(a =>
-                    (!string.IsNullOrEmpty(a.CurrentAddress.Thana) && a.CurrentAddress.Thana.Contains(key, StringComparison.OrdinalIgnoreCase)) ||
-                    (!string.IsNullOrEmpty(a.CurrentAddress.District) && a.CurrentAddress.District.Contains(key, StringComparison.OrdinalIgnoreCase)) ||
-                    (!string.IsNullOrEmpty(a.PermanentAddress.Thana) && a.PermanentAddress.Thana.Contains(key, StringComparison.OrdinalIgnoreCase)) ||
-                    (!string.IsNullOrEmpty(a.PermanentAddress.District) && a.PermanentAddress.District.Contains(key, StringComparison.OrdinalIgnoreCase))
-                );
+                     (!string.IsNullOrEmpty(a.CurrentAddress.localAddress) && a.CurrentAddress.localAddress.ToLower().Contains(key.ToLower())) ||
+                    (!string.IsNullOrEmpty(a.CurrentAddress.Thana) && a.CurrentAddress.Thana.ToLower().Contains(key.ToLower())) ||
+                    (!string.IsNullOrEmpty(a.CurrentAddress.District) && a.CurrentAddress.District.ToLower().Contains(key.ToLower())) ||
+                    (!string.IsNullOrEmpty(a.PermanentAddress.Thana) && a.PermanentAddress.Thana.ToLower().Contains(key.ToLower())) ||
+                    (!string.IsNullOrEmpty(a.PermanentAddress.District) && a.PermanentAddress.District.ToLower().Contains(key.ToLower()))||
+                    (!string.IsNullOrEmpty(a.PermanentAddress.localAddress) && a.PermanentAddress.localAddress.ToLower().Contains(key.ToLower())));
 
                 if (addressResults.Any())
                 {
