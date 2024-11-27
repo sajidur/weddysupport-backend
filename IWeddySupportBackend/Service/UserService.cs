@@ -1,4 +1,5 @@
-﻿using IWeddySupport.Model;
+﻿using IWeddySupport.Controller;
+using IWeddySupport.Model;
 using IWeddySupport.Repository;
 using IWeddySupport.Repository;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion.Internal;
@@ -11,6 +12,7 @@ namespace IWeddySupport.Service
 {
     public interface IUserService
     {
+        Task<string> SavePhotoAsync(IFormFile file, string uploadPath);
         Task<IEnumerable<Profile>> GetAllProfilesAsync(string userId);
         Task<Profile?> GetProfileByIdAsync(string id);
         Task<Profile> CreateProfileAsync(Profile profile);
@@ -36,7 +38,7 @@ namespace IWeddySupport.Service
         Task<PartnerExpectation> CreateExpectedPartnerAsync(PartnerExpectation expectedPartner);
         Task<PartnerExpectation> UpdateExpectedPartnerAsync(PartnerExpectation expectedPartner);
         Task<PartnerExpectation> DeleteExpectedPartnerAsync(string Id);
-        Task<IEnumerable<Profile>> GetExpectedPartnersByKeyAsync(string key);
+        Task<IEnumerable<Profile>> GetExpectedPartnersByKeyAsync(SearchKeyViewModel key);
     }
 
     public class UserService : IUserService
@@ -253,106 +255,40 @@ namespace IWeddySupport.Service
             await _expectedPartnerRepository.RemoveAsync(partnerToDelete);
             return partnerToDelete;
         }
-        //public async Task<IEnumerable<Profile>> GetExpectedPartnersByKeyAsync(string key)
-        //{
-        //    // First search in the ProfileRepository
-        //    var profiles = await _profileRepository.FindAsync(a =>
-        //       a.SkinTone==key||
-        //       a.BloodGroup == key ||
-        //        a.Occupation == key ||
-        //        a.Religion == key ||
-        //        a.YearlySalary == key ||
-        //        a.MaritalStatus == key ||
-        //        a.MotherOccupationDetails == key ||
-        //        a.Gender == key ||
-        //        a.Height == key ||
-        //        a.FatherOccupationDetails == key ||
-        //        a.CompanyOrInstituteName == key);
-
-        //    // If no profiles are found, search by address fields in the AddressRepository
-        //    if (profiles == null || !profiles.Any())
-        //    {
-        //        var addressResults = await _addressRepository.FindAsync(a =>
-        //            a.CurrentAddress.Thana == key ||
-        //            a.CurrentAddress.localAddress == key ||
-        //            a.CurrentAddress.District == key ||
-        //            a.PermanentAddress.localAddress == key ||
-        //            a.PermanentAddress.Thana == key ||
-        //            a.PermanentAddress.District == key);
-
-        //        // If address search returns results, get ProfileIds and search again in the ProfileRepository
-        //        if (addressResults != null && addressResults.Any())
-        //        {
-        //            // Extract ProfileIds from addressResults (assuming Address object has a reference to ProfileId)
-        //            var profileIds = addressResults.Select(a => a.ProfileId).ToList();
-
-        //            // Initialize a list to hold the search results
-        //            var profileSearchResults = new List<Profile>();
-
-        //            // Loop through each ProfileId and search for the corresponding Profile
-        //            foreach (var profileId in profileIds)
-        //            {
-        //                // Attempt to find the profile by ProfileId (use FirstOrDefaultAsync to get a single profile)
-        //                var profile = await _profileRepository.FindAsync(p => p.Id ==Guid.Parse( profileId));
-
-        //                if (profile != null)
-        //                {
-        //                    profileSearchResults.Add(profile.FirstOrDefault()); // Add the found profile to the results
-        //                }
-        //            }
-
-        //            // Combine both sets of results (initial profile search + address-based profile search)
-        //            profiles = profiles.Concat(profileSearchResults);
-        //        }
-        //    }
-
-        //    return profiles ?? Enumerable.Empty<Profile>();
-        //}
-        public async Task<IEnumerable<Profile>> GetExpectedPartnersByKeyAsync(string key)
+       
+        public async Task<IEnumerable<Profile>> GetExpectedPartnersByKeyAsync(SearchKeyViewModel key)
         {
-            // Parse the input key to check if it's numeric
-            bool isNumeric = int.TryParse(key, out int numericKey);
 
             // Initial profile query
-            var profiles =await  _profileRepository.FindAsync(p =>
-                (!string.IsNullOrEmpty(p.SkinTone) && p.SkinTone.ToLower().Contains(key.ToLower())) ||
-                (!string.IsNullOrEmpty(p.BloodGroup) && p.BloodGroup.ToLower().Contains(key.ToLower())) ||
-                (!string.IsNullOrEmpty(p.Occupation) && p.Occupation.ToLower().Contains(key.ToLower())) ||
-                (!string.IsNullOrEmpty(p.Religion) && p.Religion.ToLower().Contains(key.ToLower())) ||
-                (!string.IsNullOrEmpty(p.MaritalStatus) && p.MaritalStatus.ToLower().Contains(key.ToLower())) ||
-                (!string.IsNullOrEmpty(p.MotherOccupationDetails) && p.MotherOccupationDetails.ToLower().Contains(key.ToLower())) ||
-                 (!string.IsNullOrEmpty(p.FatherOccupationDetails) && p.MotherOccupationDetails.ToLower().Contains(key.ToLower()))||
-                (!string.IsNullOrEmpty(p.Gender) && p.Gender.ToLower().Contains(key.ToLower()))
-            );
+          
+            var currentDate = DateTime.Now;
+            var maxDateOfBirth = currentDate.AddYears(-key.MinAge); // Oldest acceptable date of birth
+            var minDateOfBirth = currentDate.AddYears(-key.MaxAge); // Youngest acceptable date of birth
 
-            // If the key is numeric, add height, age, and salary-based filters
-            if (isNumeric)
-            {
-                profiles =profiles.Where(p =>
-                    (p.DateOfBirth != default(DateTime) &&
-                     Math.Abs(DateTime.Now.Year - p.DateOfBirth.Year) >= numericKey - 2 &&
-                     Math.Abs(DateTime.Now.Year - p.DateOfBirth.Year) <= numericKey + 2) ||
-                    (TryParseSalary(p.YearlySalary, out var parsedSalary) &&
-                     parsedSalary >= numericKey - 10000 && parsedSalary <= numericKey + 10000)).ToList();
-            }
-            if(TryParseHeight(key, out var parsedHeight))
-            {
-                profiles = profiles.Where(p =>
-                   (TryParseHeight(p.Height, out var parsedHeight) &&
-                    parsedHeight >= numericKey - 5 && parsedHeight <= numericKey + 5)
-               ).ToList();
-            }
+            var profiles = await _profileRepository.FindAsync(p =>
+                (!string.IsNullOrEmpty(p.SkinTone) && p.SkinTone.ToLower().Contains(key.SkinTon.ToLower())) ||
+                (!string.IsNullOrEmpty(p.BloodGroup) && p.BloodGroup.ToLower().Contains(key.BloodGroup.ToLower())) ||
+                (!string.IsNullOrEmpty(p.Occupation) && p.Occupation.ToLower().Contains(key.Occupation.ToLower())) ||
+                (!string.IsNullOrEmpty(p.Religion) && p.Religion.ToLower().Contains(key.Religious.ToLower())) ||
+                (!string.IsNullOrEmpty(p.MaritalStatus) && p.MaritalStatus.ToLower().Contains(key.MaritalStatus.ToLower())) ||
+                (!string.IsNullOrEmpty(p.MotherOccupationDetails) && p.MotherOccupationDetails.ToLower().Contains(key.MotherOccupation.ToLower())) ||
+                (!string.IsNullOrEmpty(p.FatherOccupationDetails) && p.FatherOccupationDetails.ToLower().Contains(key.FatherOccupation.ToLower())) ||
+                (!string.IsNullOrEmpty(p.Gender) && p.Gender.ToLower().Contains(key.Gender.ToLower())) ||
+                (p.DateOfBirth != null && p.DateOfBirth >= minDateOfBirth && p.DateOfBirth <= maxDateOfBirth) ||
+                (p.YearlySalary >= key.MinYearlySalary && p.YearlySalary <= key.MaxYearlySalary) ||
+                (p.Height >= key.MinHeight && p.Height <= key.MaxHeight)||
+                (p.CanReciteQuranProperly == key.CanReciteQuranProperly));
 
             // Search in AddressRepository if profiles list is still null or empty
             if (profiles == null || !profiles.Any())
             {
                 var addressResults = await _addressRepository.FindAsync(a =>
-                     (!string.IsNullOrEmpty(a.CurrentAddress.localAddress) && a.CurrentAddress.localAddress.ToLower().Contains(key.ToLower())) ||
-                    (!string.IsNullOrEmpty(a.CurrentAddress.Thana) && a.CurrentAddress.Thana.ToLower().Contains(key.ToLower())) ||
-                    (!string.IsNullOrEmpty(a.CurrentAddress.District) && a.CurrentAddress.District.ToLower().Contains(key.ToLower())) ||
-                    (!string.IsNullOrEmpty(a.PermanentAddress.Thana) && a.PermanentAddress.Thana.ToLower().Contains(key.ToLower())) ||
-                    (!string.IsNullOrEmpty(a.PermanentAddress.District) && a.PermanentAddress.District.ToLower().Contains(key.ToLower()))||
-                    (!string.IsNullOrEmpty(a.PermanentAddress.localAddress) && a.PermanentAddress.localAddress.ToLower().Contains(key.ToLower())));
+                     (!string.IsNullOrEmpty(a.CurrentAddress.localAddress) && a.CurrentAddress.localAddress.ToLower().Contains(key.LocalAddress.ToLower())) ||
+                    (!string.IsNullOrEmpty(a.CurrentAddress.Thana) && a.CurrentAddress.Thana.ToLower().Contains(key.Thana.ToLower())) ||
+                    (!string.IsNullOrEmpty(a.CurrentAddress.District) && a.CurrentAddress.District.ToLower().Contains(key.District.ToLower())) ||
+                    (!string.IsNullOrEmpty(a.PermanentAddress.Thana) && a.PermanentAddress.Thana.ToLower().Contains(key.LocalAddress.ToLower())) ||
+                    (!string.IsNullOrEmpty(a.PermanentAddress.District) && a.PermanentAddress.District.ToLower().Contains(key.Thana.ToLower()))||
+                    (!string.IsNullOrEmpty(a.PermanentAddress.localAddress) && a.PermanentAddress.localAddress.ToLower().Contains(key.District.ToLower())));
 
                 if (addressResults.Any())
                 {
@@ -377,47 +313,40 @@ namespace IWeddySupport.Service
             return profiles?.Distinct().ToList() ?? new List<Profile>();
         }
 
-        private bool TryParseSalary(object yearlySalary, out int parsedSalary)
+        public async Task<string> SavePhotoAsync(IFormFile file, string uploadPath)
         {
-            parsedSalary = 0;
-            if (yearlySalary == null || string.IsNullOrWhiteSpace(yearlySalary.ToString()))
-                return false;
+            if (file == null || file.Length == 0)
+            {
+                throw new ArgumentException("Invalid file. The file cannot be null or empty.", nameof(file));
+            }
 
-            string salaryString = yearlySalary.ToString().Trim().ToLower();
-            if (salaryString.EndsWith("k"))
-                salaryString = salaryString.Substring(0, salaryString.Length - 1) + "000";
+            try
+            {
+                // Generate a unique file name to prevent overwriting existing files
+                string fileExtension = Path.GetExtension(file.FileName);
+                string fileName = $"{Guid.NewGuid()}{fileExtension}";
 
-            return int.TryParse(salaryString, out parsedSalary);
+                // Construct the full file path
+                string filePath = Path.Combine(uploadPath, fileName);
+
+                // Save the file to the specified path
+                using (var fileStream = new FileStream(filePath, FileMode.Create))
+                {
+                    await file.CopyToAsync(fileStream);
+                }
+
+                return fileName;
+            }
+            catch (Exception ex)
+            {
+                // Optionally, log the exception (using a logger, if available)
+                throw new IOException("An error occurred while saving the file.", ex);
+            }
         }
 
-        private bool TryParseHeight(string height, out int parsedHeight)
-        {
-            parsedHeight = 0;
-            if (string.IsNullOrWhiteSpace(height))
-                return false;
 
-            height = height.Trim();
-            var pattern = @"(?:(\d+)\s*'(\d+)\s*\"")|(\d+)\s*feet\s*(\d+)\s*inches?|(\d+)\s*inches?";
-            var match = Regex.Match(height, pattern, RegexOptions.IgnoreCase);
 
-            if (!match.Success)
-                return false;
 
-            if (match.Groups[1].Success && match.Groups[2].Success)
-            {
-                parsedHeight = int.Parse(match.Groups[1].Value) * 12 + int.Parse(match.Groups[2].Value);
-            }
-            else if (match.Groups[3].Success && match.Groups[4].Success)
-            {
-                parsedHeight = int.Parse(match.Groups[3].Value) * 12 + int.Parse(match.Groups[4].Value);
-            }
-            else if (match.Groups[5].Success)
-            {
-                parsedHeight = int.Parse(match.Groups[5].Value);
-            }
-
-            return parsedHeight > 0;
-        }
 
     }
 }

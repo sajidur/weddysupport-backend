@@ -96,8 +96,8 @@ namespace IWeddySupport.Migrations
                     MaxAge = table.Column<int>(type: "int", nullable: false),
                     SkinTone = table.Column<string>(type: "longtext", nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
-                    HeightRange = table.Column<string>(type: "longtext", nullable: false)
-                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    MinHeight = table.Column<int>(type: "int", nullable: false),
+                    MaxHeight = table.Column<int>(type: "int", nullable: false),
                     EducationalQualification = table.Column<string>(type: "longtext", nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     PreferredDistricts = table.Column<string>(type: "longtext", nullable: false)
@@ -134,8 +134,12 @@ namespace IWeddySupport.Migrations
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     ProfileId = table.Column<string>(type: "longtext", nullable: true)
                         .Annotation("MySql:CharSet", "utf8mb4"),
-                    PhotoUrl = table.Column<string>(type: "longtext", nullable: false)
+                    FileName = table.Column<string>(type: "longtext", nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
+                    FilePath = table.Column<string>(type: "longtext", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    FileSize = table.Column<long>(type: "bigint", nullable: false),
+                    UploadedAt = table.Column<DateTime>(type: "datetime(6)", nullable: false),
                     CreatedDate = table.Column<DateTime>(type: "datetime(6)", nullable: false),
                     UpdatedDate = table.Column<DateTime>(type: "datetime(6)", nullable: true),
                     IsActive = table.Column<bool>(type: "tinyint(1)", nullable: false),
@@ -172,8 +176,7 @@ namespace IWeddySupport.Migrations
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     Occupation = table.Column<string>(type: "longtext", nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
-                    YearlySalary = table.Column<string>(type: "longtext", nullable: false)
-                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    YearlySalary = table.Column<int>(type: "int", nullable: false),
                     CompanyOrInstituteName = table.Column<string>(type: "longtext", nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     MaritalStatus = table.Column<string>(type: "longtext", nullable: false)
@@ -182,8 +185,7 @@ namespace IWeddySupport.Migrations
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     SkinTone = table.Column<string>(type: "longtext", nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
-                    Height = table.Column<string>(type: "longtext", nullable: false)
-                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    Height = table.Column<int>(type: "int", nullable: false),
                     Weight = table.Column<string>(type: "longtext", nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     BloodGroup = table.Column<string>(type: "longtext", nullable: false)

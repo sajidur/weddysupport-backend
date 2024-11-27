@@ -11,12 +11,12 @@
         public string Nationality { get; set; }
         public string Religion { get; set; }
         public string Occupation { get; set; } // "পেশা"
-        public string YearlySalary { get; set; }
+        public int YearlySalary { get; set; }
         public string CompanyOrInstituteName { get; set; }
         public string MaritalStatus { get; set; }
         public string Declaration { get; set; }
         public string SkinTone { get; set; }
-        public string Height { get; set; }
+        public int Height { get; set; }
         public string Weight { get; set; }
         public string BloodGroup { get; set; }
         public string ClothingPreferenceOutside { get; set; } // "ঘরের বাহিরে সাধারণত কি ধরণের পোষাক পরেন?"

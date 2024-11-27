@@ -1,10 +1,13 @@
 ﻿using IWeddySupport.Model;
+using IWeddySupport.Repository;
 using IWeddySupport.Service;
 using IWeddySupport.ViewModel;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Pomelo.EntityFrameworkCore.MySql.Query.Internal;
 using System.ComponentModel.DataAnnotations;
+using System.Text.RegularExpressions;
 
 namespace IWeddySupport.Controller
 {
@@ -14,10 +17,11 @@ namespace IWeddySupport.Controller
     public class UserProfileController: ControllerBase
     {
         private readonly IUserService _userService;
-
-        public UserProfileController(IUserService userService)
+        private readonly IProfilePhotoRepository _profilePhotoRepository;   
+        public UserProfileController(IUserService userService,IProfilePhotoRepository profilePhotoRepository)
         {
             _userService = userService;
+            _profilePhotoRepository = profilePhotoRepository;   
         }
 
   
@@ -50,6 +54,7 @@ namespace IWeddySupport.Controller
 
             return Ok(profile);
         }
+     
         [HttpPost("addProfile")]
         public async Task<IActionResult> CreateProfile([FromBody] ProfileViewModel profile)
         {
@@ -67,6 +72,7 @@ namespace IWeddySupport.Controller
             // Optionally retrieve user ID if needed
             var userId = user.FindFirst("Id")?.Value;
             var email = user.FindFirst("Email")?.Value;
+           
             try
             {
                 // Map the ProfileViewModel to a Profile entity
@@ -143,7 +149,7 @@ namespace IWeddySupport.Controller
                 {
                     return BadRequest("No such profile exists!");
                 }
-
+               
                 // Map the data from ProfileUpdateViewModel to the existing Profile entity
                 existingProfile.BloodGroup = profile.BloodGroup;
                 existingProfile.CanReciteQuranProperly = profile.CanReciteQuranProperly;
@@ -329,75 +335,122 @@ namespace IWeddySupport.Controller
         }
 
         // POST: api/ProfilePhoto/addPhoto
-        [HttpPost("addPhoto")]
-        public async Task<IActionResult> AddProfilePhoto([FromBody] ProfilePhotoViewModel profilePhotoViewModel)
+        [HttpPost("uploadProfilePhoto")]
+        public async Task<IActionResult> UploadProfilePhotoAsync(IFormFile file, string userId, string? profileId = null)
         {
-            if (!ModelState.IsValid)
+            if (file == null || file.Length == 0)
             {
-                return BadRequest(new
-                {
-                    message = "Invalid profile photo data.",
-                    errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage))
-                });
+                return BadRequest(new { message = "No file uploaded or file is empty." });
             }
-            // Retrieve user from context
-            var user = HttpContext.User;
-            // Optionally retrieve user ID if needed
-            var userId = user.FindFirst("Id")?.Value;
-            var email = user.FindFirst("Email")?.Value;
+
             try
             {
-                var newPhoto = new ProfilePhoto
+                // Ensure the upload directory exists
+                string uploadPath = Path.Combine(Directory.GetCurrentDirectory(), "uploads");
+                if (!Directory.Exists(uploadPath))
+                {
+                    Directory.CreateDirectory(uploadPath);
+                }
+
+                // Save the photo to the file system
+                string fileName = await _userService.SavePhotoAsync(file, uploadPath);
+
+                // Create a new profile photo record
+                var profilePhoto = new ProfilePhoto
                 {
                     Id = Guid.NewGuid(),
                     UserId = userId,
-                    ProfileId = profilePhotoViewModel.ProfileId,
-                    PhotoUrl = profilePhotoViewModel.PhotoUrl,
-                    CreatedDate = DateTime.Now
+                    ProfileId = profileId,
+                    FileName = fileName,
+                    FilePath = Path.Combine("uploads", fileName),
+                    FileSize = file.Length,
+                    UploadedAt = DateTime.UtcNow,
+                    CreatedDate = DateTime.UtcNow,  
+
                 };
 
-                var createdPhoto = await _userService.CreateProfilePhotoAsync(newPhoto);
-                return Ok(createdPhoto);
+                // Save the photo details in the database
+                await _profilePhotoRepository.AddAsync(profilePhoto); // Assuming a DbSet<ProfilePhoto> exists in YourDbContext
+
+
+                // Return success response with the photo details
+                return Ok(profilePhoto);
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new
+                // Log the exception (assuming a logger is configured)
+
+                return StatusCode(StatusCodes.Status500InternalServerError, new
                 {
-                    message = "An error occurred while adding the profile photo.",
+                    message = "An internal server error occurred while uploading the profile photo.",
                     error = ex.Message
                 });
             }
         }
 
+
         // PUT: api/ProfilePhoto/updatePhoto
-        [HttpPut("updatePhoto")]
-        public async Task<IActionResult> UpdateProfilePhoto([FromBody] UpdateProfilePhotoViewModel profilePhotoViewModel)
+        // PUT: api/ProfilePhoto/updateProfilePhoto
+        [HttpPut("updateProfilePhoto")]
+        public async Task<IActionResult> UpdateProfilePhotoAsync( IFormFile file,string photoId)
         {
-            if (!ModelState.IsValid)
+            if (file == null || file.Length == 0)
             {
-                return BadRequest(new
-                {
-                    message = "Invalid profile photo data.",
-                    errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage))
-                });
+                return BadRequest(new { message = "No file uploaded or the file is empty." });
             }
 
-            var existingPhoto = await _userService.GetProfilePhotoAsync(profilePhotoViewModel.Id);
-            if (existingPhoto == null)
+            if (string.IsNullOrWhiteSpace(photoId))
             {
-                return NotFound(new { message = "Profile photo not found." });
+                return BadRequest(new { message = "Photo ID is required." });
             }
 
             try
             {
-                existingPhoto.PhotoUrl = profilePhotoViewModel.PhotoUrl;
-                existingPhoto.UpdatedDate = DateTime.Now;   
-                var updatedPhoto = await _userService.UpdateProfilePhotoAsync(existingPhoto);
-                return Ok(updatedPhoto);
+                // Fetch the existing profile photo record using the provided photo ID
+                var existingPhoto = await _userService.GetProfilePhotoAsync(photoId);
+                if (existingPhoto == null)
+                {
+                    return NotFound(new { message = "Profile photo not found." });
+                }
+
+                // Ensure the upload directory exists
+                string uploadPath = Path.Combine(Directory.GetCurrentDirectory(), "uploads");
+                if (!Directory.Exists(uploadPath))
+                {
+                    Directory.CreateDirectory(uploadPath);
+                }
+
+                // Save the new photo to the file system
+                string newFileName = await _userService.SavePhotoAsync(file, uploadPath);
+
+                // Delete the old photo from the file system (optional)
+                string oldFilePath = Path.Combine(Directory.GetCurrentDirectory(), existingPhoto.FilePath);
+                if (System.IO.File.Exists(oldFilePath))
+                {
+                    System.IO.File.Delete(oldFilePath);
+                }
+
+                // Update the profile photo details
+                existingPhoto.FileName = newFileName;
+                existingPhoto.FilePath = Path.Combine("uploads", newFileName);
+                existingPhoto.FileSize = file.Length;
+                existingPhoto.UpdatedDate = DateTime.UtcNow;
+                existingPhoto.UploadedAt = DateTime.UtcNow;
+                // Save the updated record to the database
+                await _profilePhotoRepository.UpdateAsync(existingPhoto);
+
+                // Return the updated photo details
+                return Ok(new
+                {
+                    message = "Profile photo updated successfully.",
+                    existingPhoto
+                });
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new
+                // Log the exception (if a logger is configured)
+
+                return StatusCode(StatusCodes.Status500InternalServerError, new
                 {
                     message = "An error occurred while updating the profile photo.",
                     error = ex.Message
@@ -405,11 +458,13 @@ namespace IWeddySupport.Controller
             }
         }
 
+
+
         // DELETE: api/ProfilePhoto/deletePhoto
         [HttpDelete("deletePhoto")]
-        public async Task<IActionResult> DeleteProfilePhoto(string userId)
+        public async Task<IActionResult> DeleteProfilePhoto(string Id)
         {
-            var existingPhoto = await _userService.GetProfilePhotoAsync(userId);
+            var existingPhoto = await _userService.GetProfilePhotoAsync(Id);
             if (existingPhoto == null)
             {
                 return NotFound(new { message = "Profile photo not found." });
@@ -417,7 +472,12 @@ namespace IWeddySupport.Controller
 
             try
             {
-                var result = await _userService.DeleteProfilePhotoAsync(userId);
+                // Delete the file from the file system
+                if (System.IO.File.Exists(existingPhoto.FilePath))
+                {
+                    System.IO.File.Delete(existingPhoto.FilePath);
+                }
+                var result = await _userService.DeleteProfilePhotoAsync(Id);
                 return Ok(new { message = "Profile photo deleted successfully.", result });
             }
             catch (Exception ex)
@@ -563,10 +623,10 @@ namespace IWeddySupport.Controller
         }
 
         // Get a specific expected partner by UserId
-        [HttpGet("getExpectedPartnerBySearchKey")]
-        public async Task<IActionResult> GetExpectedPartner(string key)
+        [HttpPost("getExpectedPartnerBySearchKey")]
+        public async Task<IActionResult> GetExpectedPartner([FromBody] SearchKeyViewModel keyViewModel)
         {
-            var partners = await _userService.GetExpectedPartnersByKeyAsync(key);
+            var partners = await _userService.GetExpectedPartnersByKeyAsync(keyViewModel);
             if (partners == null)
             {
                 return NotFound("Partner preferences not found for the given UserId.");
@@ -604,7 +664,8 @@ namespace IWeddySupport.Controller
                     MinAge = expectedPartnerViewModel.MinAge,
                     MaxAge = expectedPartnerViewModel.MaxAge,
                     SkinTone = expectedPartnerViewModel.SkinTone,
-                    HeightRange = expectedPartnerViewModel.HeightRange,
+                    MinHeight = expectedPartnerViewModel.MinHeight,
+                    MaxHeight = expectedPartnerViewModel.MaxHeight,
                     EducationalQualification = expectedPartnerViewModel.EducationalQualification,
                     PreferredDistricts = expectedPartnerViewModel.PreferredDistricts,
                     MaritalStatus = expectedPartnerViewModel.MaritalStatus,
@@ -644,7 +705,8 @@ namespace IWeddySupport.Controller
                 existingPartner.MinAge = expectedPartnerViewModel.MinAge;
                 existingPartner.MaxAge = expectedPartnerViewModel.MaxAge;
                 existingPartner.SkinTone = expectedPartnerViewModel.SkinTone;
-                existingPartner.HeightRange = expectedPartnerViewModel.HeightRange;
+                existingPartner.MinHeight = expectedPartnerViewModel.MinHeight;
+                existingPartner.MaxHeight = expectedPartnerViewModel.MaxHeight;
                 existingPartner.EducationalQualification = expectedPartnerViewModel.EducationalQualification;
                 existingPartner.PreferredDistricts = expectedPartnerViewModel.PreferredDistricts;
                 existingPartner.MaritalStatus = expectedPartnerViewModel.MaritalStatus;
@@ -675,6 +737,30 @@ namespace IWeddySupport.Controller
 
 
     }
+    public class SearchKeyViewModel
+    {
+        public string SkinTon { get; set; }
+        public string BloodGroup { get; set; }
+        public string Occupation { get; set; }
+        public string Religious { get; set; }
+        public string MaritalStatus { get; set; }
+        public string MotherOccupation { get; set; }
+        public string FatherOccupation { get; set; }
+        public string Gender { get; set; }
+        public int MinAge { get; set; }
+        public int MaxAge { get; set; }
+        public int MinHeight { get; set; }
+        public int MaxHeight { get; set; }
+        public int MinYearlySalary {  get; set; }  
+        public int MaxYearlySalary { get; set; }
+        public string LocalAddress {  get; set; }   
+        public string Thana { get; set; }   
+        public string District {  get; set; } 
+        public bool CanReciteQuranProperly {  get; set; }   
+
+    }
+
+
 
   
 

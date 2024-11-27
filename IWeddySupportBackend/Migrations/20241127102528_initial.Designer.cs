@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace IWeddySupport.Migrations
 {
     [DbContext(typeof(IWeddySupportDbContext))]
-    [Migration("20241123155609_initial")]
+    [Migration("20241127102528_initial")]
     partial class initial
     {
         /// <inheritdoc />
@@ -148,10 +148,6 @@ namespace IWeddySupport.Migrations
                         .IsRequired()
                         .HasColumnType("longtext");
 
-                    b.Property<string>("HeightRange")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
                     b.Property<bool>("IsActive")
                         .HasColumnType("tinyint(1)");
 
@@ -165,7 +161,13 @@ namespace IWeddySupport.Migrations
                     b.Property<int>("MaxAge")
                         .HasColumnType("int");
 
+                    b.Property<int>("MaxHeight")
+                        .HasColumnType("int");
+
                     b.Property<int>("MinAge")
+                        .HasColumnType("int");
+
+                    b.Property<int>("MinHeight")
                         .HasColumnType("int");
 
                     b.Property<string>("PreferredDistricts")
@@ -271,9 +273,8 @@ namespace IWeddySupport.Migrations
                     b.Property<bool>("HasMentalOrPhysicalIllness")
                         .HasColumnType("tinyint(1)");
 
-                    b.Property<string>("Height")
-                        .IsRequired()
-                        .HasColumnType("longtext");
+                    b.Property<int>("Height")
+                        .HasColumnType("int");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("tinyint(1)");
@@ -342,9 +343,8 @@ namespace IWeddySupport.Migrations
                         .IsRequired()
                         .HasColumnType("longtext");
 
-                    b.Property<string>("YearlySalary")
-                        .IsRequired()
-                        .HasColumnType("longtext");
+                    b.Property<int>("YearlySalary")
+                        .HasColumnType("int");
 
                     b.Property<bool>("isPublic")
                         .HasColumnType("tinyint(1)");
@@ -366,15 +366,22 @@ namespace IWeddySupport.Migrations
                     b.Property<DateTime>("CreatedDate")
                         .HasColumnType("datetime(6)");
 
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("FilePath")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<long>("FileSize")
+                        .HasColumnType("bigint");
+
                     b.Property<bool>("IsActive")
                         .HasColumnType("tinyint(1)");
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("tinyint(1)");
-
-                    b.Property<string>("PhotoUrl")
-                        .IsRequired()
-                        .HasColumnType("longtext");
 
                     b.Property<string>("ProfileId")
                         .HasColumnType("longtext");
@@ -386,6 +393,9 @@ namespace IWeddySupport.Migrations
                         .HasColumnType("datetime(6)");
 
                     b.Property<DateTime?>("UpdatedDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime>("UploadedAt")
                         .HasColumnType("datetime(6)");
 
                     b.Property<string>("UserId")

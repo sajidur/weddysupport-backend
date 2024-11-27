@@ -5,16 +5,13 @@
         public string Id { get; set; }
         public bool isPublic { get; set; }
         public string PhoneNumber { get; set; }
-
         public string Occupation { get; set; }
-        public string YearlySalary { get; set; }
+        public int YearlySalary { get; set; }
         public string CompanyOrInstituteName { get; set; }
-
         public string MaritalStatus { get; set; }
-
         public string Declaration { get; set; }
         public string SkinTone { get; set; }
-        public string Height { get; set; }
+        public int Height { get; set; }
         public string Weight { get; set; }
         public string BloodGroup { get; set; }
         public string ClothingPreferenceOutside { get; set; }
@@ -22,7 +19,6 @@
         public bool CanReciteQuranProperly { get; set; }
         public bool HasMentalOrPhysicalIllness { get; set; }
         public bool IsFatherAlive { get; set; }
-
         public string FatherOccupationDetails { get; set; }
         public bool IsMotherAlive { get; set; }
 

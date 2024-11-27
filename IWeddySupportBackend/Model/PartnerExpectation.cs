@@ -15,7 +15,8 @@ namespace IWeddySupport.Model
         [Range(18, 50)]
         public int MaxAge { get; set; } // Maximum age of the partner
         public string SkinTone { get; set; } // Preferred skin tones (e.g., "শ্যামলা, উজ্জল শ্যামলা, ফর্সা")
-        public string HeightRange { get; set; } // Preferred height range (e.g., "৫'৪-৫'১০")
+        public int MinHeight { get; set; } // Preferred height range (e.g., "৫'৪-৫'১০")//min
+        public int MaxHeight { get; set; }//max
         public string EducationalQualification { get; set; } // Required education level
         public string PreferredDistricts { get; set; } // District preferences (e.g., "ঢাকা, গাজীপুর")
         public string MaritalStatus { get; set; } // Marital status (e.g., "অবিবাহিত")
