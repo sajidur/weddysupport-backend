@@ -18,6 +18,7 @@ namespace IWeddySupport.Model
         public string MaritalStatus { get; set; }
         public string Declaration { get; set; }
         public string SkinTone { get; set; } // Preferred skin tones (e.g., "শ্যামলা, উজ্জল শ্যামলা, ফর্সা")
+                                             // Shamla (শ্যামলা): Dusky or wheatish complexion. Forsha(ফর্সা) : Fair complexion. Kala(কালা): Dark or black complexion.
         public int Height { get; set; }
         public string Weight { get; set; }
         public string BloodGroup {  get; set; }

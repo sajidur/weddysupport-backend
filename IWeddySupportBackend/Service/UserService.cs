@@ -255,58 +255,52 @@ namespace IWeddySupport.Service
             await _expectedPartnerRepository.RemoveAsync(partnerToDelete);
             return partnerToDelete;
         }
-       
+
         public async Task<IEnumerable<Profile>> GetExpectedPartnersByKeyAsync(SearchKeyViewModel key)
         {
-
-            // Initial profile query
-          
             var currentDate = DateTime.Now;
             var maxDateOfBirth = currentDate.AddYears(-key.MinAge); // Oldest acceptable date of birth
             var minDateOfBirth = currentDate.AddYears(-key.MaxAge); // Youngest acceptable date of birth
 
+            // Query profiles based on key criteria
             var profiles = await _profileRepository.FindAsync(p =>
-                (!string.IsNullOrEmpty(p.SkinTone) && p.SkinTone.ToLower().Contains(key.SkinTon.ToLower())) ||
-                (!string.IsNullOrEmpty(p.BloodGroup) && p.BloodGroup.ToLower().Contains(key.BloodGroup.ToLower())) ||
-                (!string.IsNullOrEmpty(p.Occupation) && p.Occupation.ToLower().Contains(key.Occupation.ToLower())) ||
-                (!string.IsNullOrEmpty(p.Religion) && p.Religion.ToLower().Contains(key.Religious.ToLower())) ||
-                (!string.IsNullOrEmpty(p.MaritalStatus) && p.MaritalStatus.ToLower().Contains(key.MaritalStatus.ToLower())) ||
-                (!string.IsNullOrEmpty(p.MotherOccupationDetails) && p.MotherOccupationDetails.ToLower().Contains(key.MotherOccupation.ToLower())) ||
-                (!string.IsNullOrEmpty(p.FatherOccupationDetails) && p.FatherOccupationDetails.ToLower().Contains(key.FatherOccupation.ToLower())) ||
-                (!string.IsNullOrEmpty(p.Gender) && p.Gender.ToLower().Contains(key.Gender.ToLower())) ||
+                (!string.IsNullOrEmpty(key.SkinTon) && p.SkinTone != null && p.SkinTone.ToLower().Contains(key.SkinTon.ToLower())) ||
+                (!string.IsNullOrEmpty(key.BloodGroup) && p.BloodGroup != null && p.BloodGroup.ToLower().Contains(key.BloodGroup.ToLower())) ||
+                (!string.IsNullOrEmpty(key.Occupation) && p.Occupation != null && p.Occupation.ToLower().Contains(key.Occupation.ToLower())) ||
+                (!string.IsNullOrEmpty(key.Religious) && p.Religion != null && p.Religion.ToLower().Contains(key.Religious.ToLower())) ||
+                (!string.IsNullOrEmpty(key.MaritalStatus) && p.MaritalStatus != null && p.MaritalStatus.ToLower().Contains(key.MaritalStatus.ToLower())) ||
+                (!string.IsNullOrEmpty(key.MotherOccupation) && p.MotherOccupationDetails != null && p.MotherOccupationDetails.ToLower().Contains(key.MotherOccupation.ToLower())) ||
+                (!string.IsNullOrEmpty(key.FatherOccupation) && p.FatherOccupationDetails != null && p.FatherOccupationDetails.ToLower().Contains(key.FatherOccupation.ToLower())) ||
+                (!string.IsNullOrEmpty(key.Gender) && p.Gender != null && p.Gender.ToLower().Contains(key.Gender.ToLower())) ||
                 (p.DateOfBirth != null && p.DateOfBirth >= minDateOfBirth && p.DateOfBirth <= maxDateOfBirth) ||
                 (p.YearlySalary >= key.MinYearlySalary && p.YearlySalary <= key.MaxYearlySalary) ||
-                (p.Height >= key.MinHeight && p.Height <= key.MaxHeight)||
+                (p.Height >= key.MinHeight && p.Height <= key.MaxHeight) ||
                 (p.CanReciteQuranProperly == key.CanReciteQuranProperly));
 
-            // Search in AddressRepository if profiles list is still null or empty
-            if (profiles == null || !profiles.Any())
+            // If profiles are not found, search through address repository
+            if (!profiles?.Any() ?? true)
             {
                 var addressResults = await _addressRepository.FindAsync(a =>
-                     (!string.IsNullOrEmpty(a.CurrentAddress.localAddress) && a.CurrentAddress.localAddress.ToLower().Contains(key.LocalAddress.ToLower())) ||
-                    (!string.IsNullOrEmpty(a.CurrentAddress.Thana) && a.CurrentAddress.Thana.ToLower().Contains(key.Thana.ToLower())) ||
-                    (!string.IsNullOrEmpty(a.CurrentAddress.District) && a.CurrentAddress.District.ToLower().Contains(key.District.ToLower())) ||
-                    (!string.IsNullOrEmpty(a.PermanentAddress.Thana) && a.PermanentAddress.Thana.ToLower().Contains(key.LocalAddress.ToLower())) ||
-                    (!string.IsNullOrEmpty(a.PermanentAddress.District) && a.PermanentAddress.District.ToLower().Contains(key.Thana.ToLower()))||
-                    (!string.IsNullOrEmpty(a.PermanentAddress.localAddress) && a.PermanentAddress.localAddress.ToLower().Contains(key.District.ToLower())));
+                    (!string.IsNullOrEmpty(key.LocalAddress) && a.CurrentAddress.localAddress != null && a.CurrentAddress.localAddress.ToLower().Contains(key.LocalAddress.ToLower())) ||
+                    (!string.IsNullOrEmpty(key.Thana) && a.CurrentAddress.Thana != null && a.CurrentAddress.Thana.ToLower().Contains(key.Thana.ToLower())) ||
+                    (!string.IsNullOrEmpty(key.District) && a.CurrentAddress.District != null && a.CurrentAddress.District.ToLower().Contains(key.District.ToLower())) ||
+                    (!string.IsNullOrEmpty(key.LocalAddress) && a.PermanentAddress.localAddress != null && a.PermanentAddress.localAddress.ToLower().Contains(key.LocalAddress.ToLower())) ||
+                    (!string.IsNullOrEmpty(key.Thana) && a.PermanentAddress.Thana != null && a.PermanentAddress.Thana.ToLower().Contains(key.Thana.ToLower())) ||
+                    (!string.IsNullOrEmpty(key.District) && a.PermanentAddress.District != null && a.PermanentAddress.District.ToLower().Contains(key.District.ToLower())));
 
                 if (addressResults.Any())
                 {
                     var profileIds = addressResults.Select(a => a.ProfileId).Distinct();
-                    var profileSearchResults = new List<Profile>();
 
-                    foreach (var profileId in profileIds)
+                    var profileSearchResults = await Task.WhenAll(profileIds.Select(async profileId =>
                     {
                         var profile = await _profileRepository.FindAsync(p => p.Id == Guid.Parse(profileId));
-                        if (profile != null)
-                        {
-                            profileSearchResults.Add(profile.FirstOrDefault());
-                        }
-                    }
+                        return profile.FirstOrDefault();
+                    }));
 
                     profiles = profiles != null
-                        ? profiles.Concat(profileSearchResults).ToList()
-                        : profileSearchResults;
+                        ? profiles.Concat(profileSearchResults.Where(p => p != null)).ToList()
+                        : profileSearchResults.Where(p => p != null).ToList();
                 }
             }
 

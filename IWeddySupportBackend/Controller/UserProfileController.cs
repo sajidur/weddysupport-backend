@@ -343,6 +343,15 @@ namespace IWeddySupport.Controller
                 return BadRequest(new { message = "No file uploaded or file is empty." });
             }
 
+            // Validate file extension
+            var allowedExtensions = new[] { ".png", ".jpg", ".jpeg", ".ico", ".gif" };
+            var fileExtension = Path.GetExtension(file.FileName).ToLowerInvariant();
+
+            if (!allowedExtensions.Contains(fileExtension))
+            {
+                return BadRequest(new { message = "Invalid file type. Only .png, .jpg, .jpeg, .ico files are allowed." });
+            }
+
             try
             {
                 // Ensure the upload directory exists
@@ -353,7 +362,13 @@ namespace IWeddySupport.Controller
                 }
 
                 // Save the photo to the file system
-                string fileName = await _userService.SavePhotoAsync(file, uploadPath);
+                string fileName = Guid.NewGuid() + fileExtension; // Generate unique file name
+                string filePath = Path.Combine(uploadPath, fileName);
+
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    await file.CopyToAsync(stream);
+                }
 
                 // Create a new profile photo record
                 var profilePhoto = new ProfilePhoto
@@ -365,16 +380,17 @@ namespace IWeddySupport.Controller
                     FilePath = Path.Combine("uploads", fileName),
                     FileSize = file.Length,
                     UploadedAt = DateTime.UtcNow,
-                    CreatedDate = DateTime.UtcNow,  
-
+                    CreatedDate = DateTime.UtcNow,
                 };
 
                 // Save the photo details in the database
-                await _profilePhotoRepository.AddAsync(profilePhoto); // Assuming a DbSet<ProfilePhoto> exists in YourDbContext
-
-
+                var addedProfilePhoto=await _userService.CreateProfilePhotoAsync(profilePhoto);
                 // Return success response with the photo details
-                return Ok(profilePhoto);
+                return Ok(new
+                {
+                    message = "File uploaded successfully.",
+                    addedProfilePhoto
+                });
             }
             catch (Exception ex)
             {
@@ -388,11 +404,9 @@ namespace IWeddySupport.Controller
             }
         }
 
-
-        // PUT: api/ProfilePhoto/updatePhoto
         // PUT: api/ProfilePhoto/updateProfilePhoto
         [HttpPut("updateProfilePhoto")]
-        public async Task<IActionResult> UpdateProfilePhotoAsync( IFormFile file,string photoId)
+        public async Task<IActionResult> UpdateProfilePhotoAsync(IFormFile file, string photoId)
         {
             if (file == null || file.Length == 0)
             {
@@ -402,6 +416,15 @@ namespace IWeddySupport.Controller
             if (string.IsNullOrWhiteSpace(photoId))
             {
                 return BadRequest(new { message = "Photo ID is required." });
+            }
+
+            // Validate file extension
+            var allowedExtensions = new[] { ".png", ".jpg", ".jpeg", ".ico",".gif" };
+            var fileExtension = Path.GetExtension(file.FileName).ToLowerInvariant();
+
+            if (!allowedExtensions.Contains(fileExtension))
+            {
+                return BadRequest(new { message = "Invalid file type. Only .png, .jpg, .jpeg, .ico files are allowed." });
             }
 
             try
@@ -421,7 +444,13 @@ namespace IWeddySupport.Controller
                 }
 
                 // Save the new photo to the file system
-                string newFileName = await _userService.SavePhotoAsync(file, uploadPath);
+                string newFileName = Guid.NewGuid() + fileExtension; // Generate a unique name
+                string newFilePath = Path.Combine(uploadPath, newFileName);
+
+                using (var stream = new FileStream(newFilePath, FileMode.Create))
+                {
+                    await file.CopyToAsync(stream);
+                }
 
                 // Delete the old photo from the file system (optional)
                 string oldFilePath = Path.Combine(Directory.GetCurrentDirectory(), existingPhoto.FilePath);
@@ -435,7 +464,7 @@ namespace IWeddySupport.Controller
                 existingPhoto.FilePath = Path.Combine("uploads", newFileName);
                 existingPhoto.FileSize = file.Length;
                 existingPhoto.UpdatedDate = DateTime.UtcNow;
-                existingPhoto.UploadedAt = DateTime.UtcNow;
+
                 // Save the updated record to the database
                 await _profilePhotoRepository.UpdateAsync(existingPhoto);
 
@@ -443,7 +472,7 @@ namespace IWeddySupport.Controller
                 return Ok(new
                 {
                     message = "Profile photo updated successfully.",
-                    existingPhoto
+                    photo = existingPhoto
                 });
             }
             catch (Exception ex)
@@ -458,31 +487,42 @@ namespace IWeddySupport.Controller
             }
         }
 
-
-
         // DELETE: api/ProfilePhoto/deletePhoto
-        [HttpDelete("deletePhoto")]
-        public async Task<IActionResult> DeleteProfilePhoto(string Id)
+        [HttpDelete("deleteProfilePhoto")]
+        public async Task<IActionResult> DeleteProfilePhotoAsync(string id)
         {
-            var existingPhoto = await _userService.GetProfilePhotoAsync(Id);
-            if (existingPhoto == null)
+            if (string.IsNullOrWhiteSpace(id))
             {
-                return NotFound(new { message = "Profile photo not found." });
+                return BadRequest(new { message = "Photo ID is required." });
             }
 
             try
             {
-                // Delete the file from the file system
-                if (System.IO.File.Exists(existingPhoto.FilePath))
+                // Fetch the existing photo record
+                var existingPhoto = await _userService.GetProfilePhotoAsync(id);
+                if (existingPhoto == null)
                 {
-                    System.IO.File.Delete(existingPhoto.FilePath);
+                    return NotFound(new { message = "Profile photo not found." });
                 }
-                var result = await _userService.DeleteProfilePhotoAsync(Id);
-                return Ok(new { message = "Profile photo deleted successfully.", result });
+
+                // Delete the file from the file system
+                string fullFilePath = Path.Combine(Directory.GetCurrentDirectory(), existingPhoto.FilePath);
+                if (System.IO.File.Exists(fullFilePath))
+                {
+                    System.IO.File.Delete(fullFilePath);
+                }
+
+                // Delete the photo record from the database
+                await _userService.DeleteProfilePhotoAsync(id);
+
+                // Return a success response
+                return Ok(new { message = "Profile photo deleted successfully." });
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new
+                // Log the exception (if a logger is configured)
+
+                return StatusCode(StatusCodes.Status500InternalServerError, new
                 {
                     message = "An error occurred while deleting the profile photo.",
                     error = ex.Message
