@@ -59,14 +59,14 @@ namespace IWeddySupport.Migrations
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     ProfileId = table.Column<string>(type: "longtext", nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
-                    HighestEducationLevel = table.Column<string>(type: "longtext", nullable: false)
+                    HighestEducationLevel = table.Column<string>(type: "longtext", nullable: true)
                         .Annotation("MySql:CharSet", "utf8mb4"),
-                    InstituteName = table.Column<string>(type: "longtext", nullable: false)
+                    InstituteName = table.Column<string>(type: "longtext", nullable: true)
                         .Annotation("MySql:CharSet", "utf8mb4"),
-                    GraduationYear = table.Column<int>(type: "int", nullable: false),
-                    DivisionOrDepartment = table.Column<string>(type: "longtext", nullable: false)
+                    GraduationYear = table.Column<int>(type: "int", nullable: true),
+                    DivisionOrDepartment = table.Column<string>(type: "longtext", nullable: true)
                         .Annotation("MySql:CharSet", "utf8mb4"),
-                    ResultOrGrade = table.Column<string>(type: "longtext", nullable: false)
+                    ResultOrGrade = table.Column<string>(type: "longtext", nullable: true)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     CreatedDate = table.Column<DateTime>(type: "datetime(6)", nullable: false),
                     UpdatedDate = table.Column<DateTime>(type: "datetime(6)", nullable: true),
@@ -94,21 +94,21 @@ namespace IWeddySupport.Migrations
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     MinAge = table.Column<int>(type: "int", nullable: false),
                     MaxAge = table.Column<int>(type: "int", nullable: false),
-                    SkinTone = table.Column<string>(type: "longtext", nullable: false)
+                    SkinTone = table.Column<string>(type: "longtext", nullable: true)
                         .Annotation("MySql:CharSet", "utf8mb4"),
-                    MinHeight = table.Column<int>(type: "int", nullable: false),
-                    MaxHeight = table.Column<int>(type: "int", nullable: false),
-                    EducationalQualification = table.Column<string>(type: "longtext", nullable: false)
+                    MinHeight = table.Column<int>(type: "int", nullable: true),
+                    MaxHeight = table.Column<int>(type: "int", nullable: true),
+                    EducationalQualification = table.Column<string>(type: "longtext", nullable: true)
                         .Annotation("MySql:CharSet", "utf8mb4"),
-                    PreferredDistricts = table.Column<string>(type: "longtext", nullable: false)
+                    PreferredDistricts = table.Column<string>(type: "longtext", nullable: true)
                         .Annotation("MySql:CharSet", "utf8mb4"),
-                    MaritalStatus = table.Column<string>(type: "longtext", nullable: false)
+                    MaritalStatus = table.Column<string>(type: "longtext", nullable: true)
                         .Annotation("MySql:CharSet", "utf8mb4"),
-                    PreferredProfessions = table.Column<string>(type: "longtext", nullable: false)
+                    PreferredProfessions = table.Column<string>(type: "longtext", nullable: true)
                         .Annotation("MySql:CharSet", "utf8mb4"),
-                    FinancialStatus = table.Column<string>(type: "longtext", nullable: false)
+                    FinancialStatus = table.Column<string>(type: "longtext", nullable: true)
                         .Annotation("MySql:CharSet", "utf8mb4"),
-                    DesiredCharacteristics = table.Column<string>(type: "longtext", nullable: false)
+                    DesiredCharacteristics = table.Column<string>(type: "longtext", nullable: true)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     CreatedDate = table.Column<DateTime>(type: "datetime(6)", nullable: false),
                     UpdatedDate = table.Column<DateTime>(type: "datetime(6)", nullable: true),
@@ -190,8 +190,6 @@ namespace IWeddySupport.Migrations
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     BloodGroup = table.Column<string>(type: "longtext", nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
-                    ClothingPreferenceOutside = table.Column<string>(type: "longtext", nullable: false)
-                        .Annotation("MySql:CharSet", "utf8mb4"),
                     PrayerHabit = table.Column<string>(type: "longtext", nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     CanReciteQuranProperly = table.Column<bool>(type: "tinyint(1)", nullable: false),
@@ -207,8 +205,6 @@ namespace IWeddySupport.Migrations
                     FamilyDetails = table.Column<string>(type: "longtext", nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     FamilyEconomicsCondition = table.Column<string>(type: "longtext", nullable: false)
-                        .Annotation("MySql:CharSet", "utf8mb4"),
-                    FamilyEconomicsDetails = table.Column<string>(type: "longtext", nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     FamilyReligiousEnvironment = table.Column<string>(type: "longtext", nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),

@@ -1,4 +1,4 @@
-cd .\IDoctorBackend
+cd IWeddySupportBackend
 dotnet ef migrations add initial
 PM> dotnet ef migrations add initial --project D:\Project\IDoctorBackend\IDoctorMicroservice\IDoctorBackend.csproj
 

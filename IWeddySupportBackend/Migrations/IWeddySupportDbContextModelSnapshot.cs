@@ -75,18 +75,15 @@ namespace IWeddySupport.Migrations
                         .HasColumnType("datetime(6)");
 
                     b.Property<string>("DivisionOrDepartment")
-                        .IsRequired()
                         .HasColumnType("longtext");
 
-                    b.Property<int>("GraduationYear")
+                    b.Property<int?>("GraduationYear")
                         .HasColumnType("int");
 
                     b.Property<string>("HighestEducationLevel")
-                        .IsRequired()
                         .HasColumnType("longtext");
 
                     b.Property<string>("InstituteName")
-                        .IsRequired()
                         .HasColumnType("longtext");
 
                     b.Property<bool>("IsActive")
@@ -103,7 +100,6 @@ namespace IWeddySupport.Migrations
                         .HasColumnType("longtext");
 
                     b.Property<string>("ResultOrGrade")
-                        .IsRequired()
                         .HasColumnType("longtext");
 
                     b.Property<DateTime?>("UpdatedBy")
@@ -134,15 +130,12 @@ namespace IWeddySupport.Migrations
                         .HasColumnType("datetime(6)");
 
                     b.Property<string>("DesiredCharacteristics")
-                        .IsRequired()
                         .HasColumnType("longtext");
 
                     b.Property<string>("EducationalQualification")
-                        .IsRequired()
                         .HasColumnType("longtext");
 
                     b.Property<string>("FinancialStatus")
-                        .IsRequired()
                         .HasColumnType("longtext");
 
                     b.Property<bool>("IsActive")
@@ -152,27 +145,26 @@ namespace IWeddySupport.Migrations
                         .HasColumnType("tinyint(1)");
 
                     b.Property<string>("MaritalStatus")
-                        .IsRequired()
                         .HasColumnType("longtext");
 
-                    b.Property<int>("MaxAge")
+                    b.Property<int?>("MaxAge")
+                        .IsRequired()
                         .HasColumnType("int");
 
-                    b.Property<int>("MaxHeight")
+                    b.Property<int?>("MaxHeight")
                         .HasColumnType("int");
 
-                    b.Property<int>("MinAge")
+                    b.Property<int?>("MinAge")
+                        .IsRequired()
                         .HasColumnType("int");
 
-                    b.Property<int>("MinHeight")
+                    b.Property<int?>("MinHeight")
                         .HasColumnType("int");
 
                     b.Property<string>("PreferredDistricts")
-                        .IsRequired()
                         .HasColumnType("longtext");
 
                     b.Property<string>("PreferredProfessions")
-                        .IsRequired()
                         .HasColumnType("longtext");
 
                     b.Property<string>("ProfileId")
@@ -183,7 +175,6 @@ namespace IWeddySupport.Migrations
                         .HasColumnType("longtext");
 
                     b.Property<string>("SkinTone")
-                        .IsRequired()
                         .HasColumnType("longtext");
 
                     b.Property<DateTime?>("UpdatedBy")
@@ -214,10 +205,6 @@ namespace IWeddySupport.Migrations
                     b.Property<bool>("CanReciteQuranProperly")
                         .HasColumnType("tinyint(1)");
 
-                    b.Property<string>("ClothingPreferenceOutside")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
                     b.Property<string>("CompanyOrInstituteName")
                         .IsRequired()
                         .HasColumnType("longtext");
@@ -244,10 +231,6 @@ namespace IWeddySupport.Migrations
                         .HasColumnType("longtext");
 
                     b.Property<string>("FamilyEconomicsCondition")
-                        .IsRequired()
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("FamilyEconomicsDetails")
                         .IsRequired()
                         .HasColumnType("longtext");
 

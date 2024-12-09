@@ -98,7 +98,6 @@ namespace IWeddySupport.Controller
                     Height = profile.Height,
                     Weight = profile.Weight,
                     BloodGroup = profile.BloodGroup,
-                    ClothingPreferenceOutside = profile.ClothingPreferenceOutside,
                     PrayerHabit = profile.PrayerHabit,
                     CanReciteQuranProperly = profile.CanReciteQuranProperly,
                     HasMentalOrPhysicalIllness = profile.HasMentalOrPhysicalIllness,
@@ -110,7 +109,6 @@ namespace IWeddySupport.Controller
                     NumberOfSisters = profile.NumberOfSisters,
                     FamilyDetails = profile.FamilyDetails,
                     FamilyEconomicsCondition = profile.FamilyEconomicsCondition,
-                    FamilyEconomicsDetails = profile.FamilyEconomicsDetails,
                     FamilyReligiousEnvironment = profile.FamilyReligiousEnvironment
                 };
 
@@ -162,7 +160,6 @@ namespace IWeddySupport.Controller
                 existingProfile.Declaration = profile.Declaration;
                 existingProfile.Height = profile.Height;
                 existingProfile.Weight = profile.Weight;
-                existingProfile.ClothingPreferenceOutside = profile.ClothingPreferenceOutside;
                 existingProfile.PrayerHabit = profile.PrayerHabit;
                 existingProfile.HasMentalOrPhysicalIllness = profile.HasMentalOrPhysicalIllness;
                 existingProfile.IsFatherAlive = profile.IsFatherAlive;
@@ -173,7 +170,6 @@ namespace IWeddySupport.Controller
                 existingProfile.NumberOfSisters = profile.NumberOfSisters;
                 existingProfile.FamilyDetails = profile.FamilyDetails;
                 existingProfile.FamilyEconomicsCondition = profile.FamilyEconomicsCondition;
-                existingProfile.FamilyEconomicsDetails = profile.FamilyEconomicsDetails;
                 existingProfile.FamilyReligiousEnvironment = profile.FamilyReligiousEnvironment;
                 existingProfile.isPublic=profile.isPublic;
                 existingProfile.UpdatedDate = DateTime.Now;
