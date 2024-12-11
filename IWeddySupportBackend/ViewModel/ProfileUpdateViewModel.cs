@@ -14,7 +14,7 @@
         public int Height { get; set; }
         public string Weight { get; set; }
         public string BloodGroup { get; set; }
-        public string ClothingPreferenceOutside { get; set; }
+       // public string ClothingPreferenceOutside { get; set; }
         public string PrayerHabit { get; set; }
         public bool CanReciteQuranProperly { get; set; }
         public bool HasMentalOrPhysicalIllness { get; set; }
@@ -31,7 +31,7 @@
 
         public string FamilyEconomicsCondition { get; set; }
 
-        public string FamilyEconomicsDetails { get; set; }
+       // public string FamilyEconomicsDetails { get; set; }
 
         public string FamilyReligiousEnvironment { get; set; }
     }

@@ -292,8 +292,12 @@ namespace IWeddySupport.Controller
             {
                 return BadRequest(ModelState);
             }
-            var existedAddress=await _userService.GetAddressAsync(addressViewModel.Id);
+            var existedAddress = await _userService.GetAddressAsync(addressViewModel.Id);
             if (existedAddress == null) { return BadRequest("No such address existed!"); }
+            existedAddress.CurrentAddress.localAddress = addressViewModel.CurrentAddress.LocalAddress;
+            existedAddress.CurrentAddress.Thana = addressViewModel.CurrentAddress.Thana;
+            existedAddress.CurrentAddress.District = addressViewModel.CurrentAddress.District;
+            existedAddress.UpdatedDate = DateTime.Now;
             var updatedAddress = await _userService.UpdateAddressAsync(existedAddress);
             
             return Ok(updatedAddress);
