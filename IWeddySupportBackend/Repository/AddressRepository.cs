@@ -6,7 +6,7 @@ namespace IWeddySupport.Repository
     {
 
     }
-    public class AddressRepository: GenericRepository<Address>, IAddressRepository
+    public class AddressRepository : GenericRepository<Address>, IAddressRepository
     {
         public AddressRepository(IWeddySupportDbContext context) : base(context)
         {

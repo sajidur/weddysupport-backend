@@ -39,6 +39,17 @@ namespace IWeddySupport.Service
         Task<PartnerExpectation> UpdateExpectedPartnerAsync(PartnerExpectation expectedPartner);
         Task<PartnerExpectation> DeleteExpectedPartnerAsync(string Id);
         Task<IEnumerable<Profile>> GetExpectedPartnersByKeyAsync(SearchKeyViewModel key);
+        Task<IEnumerable<Profile>> GetAllProfilesAsyncByDefault();
+        Task<IEnumerable<UserProfile>> GetAllUserProfilesByDefault();
+        Task<IEnumerable<ProfilePhoto>> GetAllProfilePhotosAsyncByDefault();
+        Task<IEnumerable<Address>> GetAllAddressAsyncByDefault();
+        Task<IEnumerable<PartnerExpectation>> GetAllExpectedPartnersAsyncByDefault();
+        Task<UserRequest> AddOrGetUserRequestAsync(UserRequest us);
+        Task<ProfilePhoto> GetProfilePhotoByProfileIdAsync(string profileId);
+        Task<UserProfile> GetUserProfileByProfileIdAsync(string profileId);
+        Task<Address> GetProfileAddressByProfileIdAsync(string profileId);
+
+
     }
 
     public class UserService : IUserService
@@ -48,14 +59,99 @@ namespace IWeddySupport.Service
         private readonly IAddressRepository _addressRepository;
         private readonly IUserProfileRepository _userProfileRepository;
         private readonly IPartnerExpectationRepository _expectedPartnerRepository;
+        private readonly IUserRequestReository _userRequestReository;
         public UserService(IPartnerExpectationRepository expectedPartnerRepository, IUserProfileRepository userProfileRepository,IProfileRepository profileRepository, 
-            IAddressRepository addressRepository,IProfilePhotoRepository profilePhotoRepository)
+            IAddressRepository addressRepository,IProfilePhotoRepository profilePhotoRepository,IUserRequestReository userRequest)
         {
             _profileRepository = profileRepository;
             _addressRepository = addressRepository;
             _profilePhotoRepository = profilePhotoRepository;
             _userProfileRepository = userProfileRepository;
             _expectedPartnerRepository = expectedPartnerRepository; 
+            _userRequestReository = userRequest;
+        }
+        public async Task<ProfilePhoto> GetProfilePhotoByProfileIdAsync(string profileId)
+        {
+            var profiles = await _profilePhotoRepository.FindAsync(a => a.ProfileId == profileId);
+            if (profiles.Any())
+            {
+                return profiles.FirstOrDefault();
+            }
+            return null;
+        }
+        public async Task<UserProfile> GetUserProfileByProfileIdAsync(string profileId)
+        {
+            var profiles = await _userProfileRepository.FindAsync(a => a.ProfileId == profileId);
+            if (profiles.Any())
+            {
+                return profiles.FirstOrDefault();
+            }
+            return null;
+        }
+        public async Task<Address> GetProfileAddressByProfileIdAsync(string profileId)
+        {
+            var profiles = await _addressRepository.FindAsync(a => a.ProfileId == profileId);
+            if (profiles.Any())
+            {
+                return profiles.FirstOrDefault();
+            }
+            return null;
+        }
+
+        public async Task<IEnumerable<PartnerExpectation>> GetAllExpectedPartnersAsyncByDefault()
+        {
+            return await _expectedPartnerRepository.GetAllAsync();
+
+        }
+
+        public async Task<IEnumerable<ProfilePhoto>> GetAllProfilePhotosAsyncByDefault()
+        {
+            return await _profilePhotoRepository.GetAllAsync();
+        }
+        public async Task<IEnumerable<Address>> GetAllAddressAsyncByDefault()
+        {
+            return await _addressRepository.GetAllAsync();
+        }
+        public async Task<UserRequest> AddOrGetUserRequestAsync(UserRequest us)
+        {
+            var users = await _userRequestReository.FindAsync(a=>a.ExpacterProfileId==us.RequesterProfileId||a.RequesterProfileId==us.RequesterProfileId);  
+            if(users != null)
+            {
+                var user = users.FirstOrDefault();
+                user.UserRequestRejected =! user.UserRequestAccepted;
+                if(user.RequesterProfileId==us.RequesterProfileId)//requester 
+                {
+                    return user;    
+                }
+                //expecter
+                if (us.UserRequestRejected)
+                {
+                    us.UserRequestAccepted = !us.UserRequestRejected;
+                }
+                else
+                {
+                    us.UserRequestRejected=!us.UserRequestAccepted;
+                }
+                await _userRequestReository.UpdateAsync(us);
+                
+            }
+            else
+            {
+                us.UserRequestRejected = true;
+                us.UserRequestAccepted = !us.UserRequestRejected;
+                await _userRequestReository.AddAsync(us);   
+            }
+            return us;
+        }
+
+        public async Task<IEnumerable<UserProfile>> GetAllUserProfilesByDefault()
+        {
+            return await _userProfileRepository.GetAllAsync(); 
+        }
+
+        public async Task<IEnumerable<Profile>> GetAllProfilesAsyncByDefault()
+        {
+            return await _profileRepository.GetAllAsync();
         }
 
         public async Task<IEnumerable<Profile>> GetAllProfilesAsync(string userId)

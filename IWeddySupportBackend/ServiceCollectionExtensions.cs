@@ -18,6 +18,7 @@ namespace IWeddySupport
             services.AddScoped<IPartnerExpectationRepository, PartnerExpectationRepository>();
             services.AddScoped<IProfileRepository, ProfileRepository>();
             services.AddScoped<IUserProfileRepository, UserProfileRepository>();
+            services.AddScoped<IUserRequestReository, UserRequestReository>();
             // Add other service registrations here
             services.AddScoped<IUserService, UserService>();
 

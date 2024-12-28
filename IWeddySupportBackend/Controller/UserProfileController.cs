@@ -23,8 +23,26 @@ namespace IWeddySupport.Controller
             _userService = userService;
             _profilePhotoRepository = profilePhotoRepository;   
         }
+        [HttpGet("GetAllData")]
+        public async Task<IActionResult> GetAllData()
+        {
+            var profiles = await _userService.GetAllProfilesAsyncByDefault();
+            var addresses=await _userService.GetAllAddressAsyncByDefault();
+            var expectedPartners=await _userService.GetAllExpectedPartnersAsyncByDefault(); 
+            var profilePhotos = await _userService.GetAllProfilePhotosAsyncByDefault();
+            var userProfiles = await _userService.GetAllUserProfilesByDefault();
+            var data = new
+            {
+                profiles = profiles,
+                addresses = addresses,
+                userProfiles=userProfiles,
+                profilePhotos= profilePhotos,
+                expectedPartners=expectedPartners   
 
-  
+            };
+            return Ok(data);
+        }
+
         [HttpGet("getAllProfile")]
         public async Task<IActionResult> GetAllProfiles()
         {
@@ -36,7 +54,33 @@ namespace IWeddySupport.Controller
             var profiles = await _userService.GetAllProfilesAsync(userId);
             return Ok(profiles);
         }
+        [HttpPost("profileRequest")]
+        public async Task<IActionResult> ProfileRequestAsync([FromBody] UserRequestViewModel usR)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(new
+                {
+                    message = "Invalid profile data.",
+                    errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage))
+                });
+            }
+            //var user = HttpContext.User;
+            var usr = new UserRequest
+            {
+                Id = Guid.NewGuid(),
+                CreatedDate = DateTime.Now,
+                RequesterUserId=usR.RequesterUserId,
+                RequesterProfileId=usR.RequesterProfileId,  
+                ExpacterProfileId=usR.RequesterProfileId,
+                ExpacterUserId=usR.RequesterUserId,
+                UserRequestAccepted=usR.UserRequestAccepted,    
+                UserRequestRejected=usR.UserRequestRejected
 
+            };
+            var ussR = await _userService.AddOrGetUserRequestAsync(usr);
+            return Ok(ussR);
+        }
   
         [HttpGet("getSingleProfile")]
         public async Task<IActionResult> GetProfileById(string id)
@@ -47,12 +91,27 @@ namespace IWeddySupport.Controller
             }
 
             var profile = await _userService.GetProfileByIdAsync(id);
-            if (profile == null)
+            if(profile == null)
             {
                 return NotFound($"Profile with ID {id} not found.");
             }
+            //string baseUrl = "https://api.weddy.support/UserProfile/"; // Replace with your actual base URL
+            //string filePath = "uploads\\6fb0492c-be6b-4ad2-b7d7-c722dea3aa30.jpg"; // From the API response
+            //string publicUrl = baseUrl + filePath.Replace("\\", "/");
+            //Console.WriteLine(publicUrl); // Outputs: https://cdn.weddy.support/uploads/6fb0492c-be6b-4ad2-b7d7-c722dea3aa30.jpg
 
-            return Ok(profile);
+            var photos =await _userService.GetProfilePhotoByProfileIdAsync(id);
+            var address=await _userService.GetProfileAddressByProfileIdAsync(id); 
+            var userRelationship=await _userService.GetUserProfileByProfileIdAsync(id);
+            var data = new
+            {
+                profile = profile,
+                photo = photos.FilePath,
+                address = address,
+                userRelationship = userRelationship.Relationship,
+
+            };
+            return Ok(data);
         }
      
         [HttpPost("addProfile")]
@@ -336,7 +395,7 @@ namespace IWeddySupport.Controller
 
         // POST: api/ProfilePhoto/addPhoto
         [HttpPost("uploadProfilePhoto")]
-        public async Task<IActionResult> UploadProfilePhotoAsync(IFormFile file, string userId, string? profileId = null)
+        public async Task<IActionResult> UploadProfilePhotoAsync(IFormFile file,string profileId)
         {
             if (file == null || file.Length == 0)
             {
@@ -351,7 +410,10 @@ namespace IWeddySupport.Controller
             {
                 return BadRequest(new { message = "Invalid file type. Only .png, .jpg, .jpeg, .ico files are allowed." });
             }
-
+            // Retrieve user from context
+            var user = HttpContext.User;
+            // Optionally retrieve user ID if needed
+            var userId = user.FindFirst("Id")?.Value;
             try
             {
                 // Ensure the upload directory exists
@@ -369,7 +431,7 @@ namespace IWeddySupport.Controller
                 {
                     await file.CopyToAsync(stream);
                 }
-
+                
                 // Create a new profile photo record
                 var profilePhoto = new ProfilePhoto
                 {
@@ -516,7 +578,9 @@ namespace IWeddySupport.Controller
                 await _userService.DeleteProfilePhotoAsync(id);
 
                 // Return a success response
-                return Ok(new { message = "Profile photo deleted successfully." });
+                return Ok(new { message = "Profile photo deleted successfully.",
+                    existingPhoto
+                });
             }
             catch (Exception ex)
             {

@@ -24,7 +24,7 @@ namespace IWeddySupport.Repository
         public DbSet<EducationalQualification> EducationalQualifications { get; set; }
         public DbSet<ProfilePhoto> ProfilePhotos { get; set; }
         public DbSet<PartnerExpectation> PartnerExpectations { get; set; }
-
+        public DbSet<UserRequest> UserRequests { get; set; }
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             if (!optionsBuilder.IsConfigured)
