@@ -7,5 +7,7 @@
         public string FilePath { get; set; }
         public long FileSize { get; set; } // File size in bytes
         public DateTime UploadedAt { get; set; }
+        public string PhotoUrl { get; set; }
+
     }
 }

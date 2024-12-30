@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace IWeddySupport.Migrations
 {
     [DbContext(typeof(IWeddySupportDbContext))]
-    [Migration("20241209141910_initial")]
+    [Migration("20241230151316_initial")]
     partial class initial
     {
         /// <inheritdoc />
@@ -366,6 +366,10 @@ namespace IWeddySupport.Migrations
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("tinyint(1)");
 
+                    b.Property<string>("PhotoUrl")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
                     b.Property<string>("ProfileId")
                         .HasColumnType("longtext");
 
@@ -431,6 +435,60 @@ namespace IWeddySupport.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("UserProfiles");
+                });
+
+            modelBuilder.Entity("IWeddySupport.Model.UserRequest", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<DateTime>("CreatedBy")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime>("CreatedDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("ExpacterProfileId")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("ExpacterUserId")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<string>("Remarks")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("RequesterProfileId")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("RequesterUserId")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<DateTime?>("UpdatedBy")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime?>("UpdatedDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<bool>("UserRequestAccepted")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<bool>("UserRequestRejected")
+                        .HasColumnType("tinyint(1)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("UserRequests");
                 });
 
             modelBuilder.Entity("IWeddySupport.Model.Address", b =>

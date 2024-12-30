@@ -2,7 +2,9 @@
 using IWeddySupport;
 using IWeddySupport.Repository;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Hosting.Server;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 
@@ -61,6 +63,17 @@ app.UseSwaggerUI(c =>
     c.SwaggerEndpoint("/swagger/v1/swagger.json", "My API V1");
 });
 
+// Serve static files from the "uploads" directory
+var uploadPath = Path.Combine(Directory.GetCurrentDirectory(), "uploads");
+if (!Directory.Exists(uploadPath))
+{
+    Directory.CreateDirectory(uploadPath);
+}
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(uploadPath),
+    RequestPath = "/uploads"
+});
 
 
 // Middleware for authentication and authorization
@@ -69,10 +82,12 @@ app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+//app.UseStaticFiles();//to serve as static files
+
 using (var serviceScope = app.Services.GetService<IServiceScopeFactory>().CreateScope())
 {
     var context = serviceScope.ServiceProvider.GetRequiredService<IWeddySupportDbContext>();
-    //context.Database.Migrate();
+    context.Database.Migrate();
 }
 
 app.Run();

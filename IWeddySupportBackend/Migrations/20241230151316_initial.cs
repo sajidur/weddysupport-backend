@@ -140,6 +140,8 @@ namespace IWeddySupport.Migrations
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     FileSize = table.Column<long>(type: "bigint", nullable: false),
                     UploadedAt = table.Column<DateTime>(type: "datetime(6)", nullable: false),
+                    PhotoUrl = table.Column<string>(type: "longtext", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
                     CreatedDate = table.Column<DateTime>(type: "datetime(6)", nullable: false),
                     UpdatedDate = table.Column<DateTime>(type: "datetime(6)", nullable: true),
                     IsActive = table.Column<bool>(type: "tinyint(1)", nullable: false),
@@ -250,6 +252,36 @@ namespace IWeddySupport.Migrations
                     table.PrimaryKey("PK_UserProfiles", x => x.Id);
                 })
                 .Annotation("MySql:CharSet", "utf8mb4");
+
+            migrationBuilder.CreateTable(
+                name: "UserRequests",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "char(36)", nullable: false, collation: "ascii_general_ci"),
+                    RequesterProfileId = table.Column<string>(type: "longtext", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    RequesterUserId = table.Column<string>(type: "longtext", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    ExpacterProfileId = table.Column<string>(type: "longtext", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    ExpacterUserId = table.Column<string>(type: "longtext", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    UserRequestAccepted = table.Column<bool>(type: "tinyint(1)", nullable: false),
+                    UserRequestRejected = table.Column<bool>(type: "tinyint(1)", nullable: false),
+                    CreatedDate = table.Column<DateTime>(type: "datetime(6)", nullable: false),
+                    UpdatedDate = table.Column<DateTime>(type: "datetime(6)", nullable: true),
+                    IsActive = table.Column<bool>(type: "tinyint(1)", nullable: false),
+                    IsDeleted = table.Column<bool>(type: "tinyint(1)", nullable: false),
+                    Remarks = table.Column<string>(type: "longtext", nullable: true)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    CreatedBy = table.Column<DateTime>(type: "datetime(6)", nullable: false),
+                    UpdatedBy = table.Column<DateTime>(type: "datetime(6)", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_UserRequests", x => x.Id);
+                })
+                .Annotation("MySql:CharSet", "utf8mb4");
         }
 
         /// <inheritdoc />
@@ -272,6 +304,9 @@ namespace IWeddySupport.Migrations
 
             migrationBuilder.DropTable(
                 name: "UserProfiles");
+
+            migrationBuilder.DropTable(
+                name: "UserRequests");
         }
     }
 }

@@ -18,6 +18,7 @@ namespace IWeddySupport.Controller
     {
         private readonly IUserService _userService;
         private readonly IProfilePhotoRepository _profilePhotoRepository;   
+        
         public UserProfileController(IUserService userService,IProfilePhotoRepository profilePhotoRepository)
         {
             _userService = userService;
@@ -431,7 +432,10 @@ namespace IWeddySupport.Controller
                 {
                     await file.CopyToAsync(stream);
                 }
-                
+                // Generate the public URL for the uploaded file
+                string publicUrl = $"{Request.Scheme}://{Request.Host}/uploads/{fileName}";
+
+
                 // Create a new profile photo record
                 var profilePhoto = new ProfilePhoto
                 {
@@ -443,6 +447,7 @@ namespace IWeddySupport.Controller
                     FileSize = file.Length,
                     UploadedAt = DateTime.UtcNow,
                     CreatedDate = DateTime.UtcNow,
+                    PhotoUrl = publicUrl   
                 };
 
                 // Save the photo details in the database
@@ -452,6 +457,7 @@ namespace IWeddySupport.Controller
                 {
                     message = "File uploaded successfully.",
                     addedProfilePhoto
+                  
                 });
             }
             catch (Exception ex)
@@ -520,13 +526,15 @@ namespace IWeddySupport.Controller
                 {
                     System.IO.File.Delete(oldFilePath);
                 }
+                // Generate the public URL for the uploaded file
+                string publicUrl = $"{Request.Scheme}://{Request.Host}/uploads/{newFileName}";
 
                 // Update the profile photo details
                 existingPhoto.FileName = newFileName;
                 existingPhoto.FilePath = Path.Combine("uploads", newFileName);
                 existingPhoto.FileSize = file.Length;
                 existingPhoto.UpdatedDate = DateTime.UtcNow;
-
+                existingPhoto.PhotoUrl = publicUrl;
                 // Save the updated record to the database
                 await _profilePhotoRepository.UpdateAsync(existingPhoto);
 
@@ -535,6 +543,7 @@ namespace IWeddySupport.Controller
                 {
                     message = "Profile photo updated successfully.",
                     photo = existingPhoto
+                   
                 });
             }
             catch (Exception ex)
