@@ -15,7 +15,7 @@ namespace IWeddySupport.Service
         Task<string> SavePhotoAsync(IFormFile file, string uploadPath);
         Task<IEnumerable<Profile>> GetAllProfilesAsync(string userId);
         Task<Profile?> GetProfileByIdAsync(string id);
-        Task<Profile> CreateProfileAsync(Profile profile);
+        Task<Profile> CreateOrGetProfileAsync(Profile profile);
         Task<Profile> UpdateProfileAsync(Profile profile);
         Task<Profile> DeleteProfileAsync(string id);
         Task<IEnumerable<Address>> GetAllAddressesAsync(string userId);
@@ -48,7 +48,10 @@ namespace IWeddySupport.Service
         Task<ProfilePhoto> GetProfilePhotoByProfileIdAsync(string profileId);
         Task<UserProfile> GetUserProfileByProfileIdAsync(string profileId);
         Task<Address> GetProfileAddressByProfileIdAsync(string profileId);
-
+        Task<Address> GetAddressByProfileIdAsync(string userId, string profileId);
+        Task<ProfilePhoto> GetProfilePhotoByIdAsync(string userId, string profileId);
+        Task<UserProfile> GetUserProfileByProfileIdAsync(string userId, string profileId);
+        Task<PartnerExpectation> GetExpectedPartnerByProfileIdAsync(string userId, string profileId);
 
     }
 
@@ -70,6 +73,27 @@ namespace IWeddySupport.Service
             _expectedPartnerRepository = expectedPartnerRepository; 
             _userRequestReository = userRequest;
         }
+        public async Task<Address> GetAddressByProfileIdAsync(string userId, string profileId)
+        {
+            var addresses = await _addressRepository.FindAsync(a => a.UserId == userId && a.ProfileId == profileId);
+
+            return addresses.FirstOrDefault();
+        }
+        public async Task<ProfilePhoto> GetProfilePhotoByIdAsync(string userId, string profileId)
+        {
+            var photos = await _profilePhotoRepository.FindAsync(a => a.UserId == userId && a.ProfileId == profileId);
+
+            return photos.FirstOrDefault();
+        }
+        public async Task<PartnerExpectation> GetExpectedPartnerByProfileIdAsync(string userId, string profileId)
+        {
+            var partners = await _expectedPartnerRepository.FindAsync(a => a.UserId == userId && a.ProfileId == profileId);
+
+            return partners.FirstOrDefault();
+
+        }
+
+
         public async Task<ProfilePhoto> GetProfilePhotoByProfileIdAsync(string profileId)
         {
             var profiles = await _profilePhotoRepository.FindAsync(a => a.ProfileId == profileId);
@@ -79,6 +103,16 @@ namespace IWeddySupport.Service
             }
             return null;
         }
+        public async Task<UserProfile> GetUserProfileByProfileIdAsync(string userId, string profileId)
+        {
+            var UsProfiles = await _userProfileRepository.FindAsync(a => a.ProfileId == profileId);
+            if (UsProfiles.Any())
+            {
+                return UsProfiles.FirstOrDefault();
+            }
+            return null;
+        }
+
         public async Task<UserProfile> GetUserProfileByProfileIdAsync(string profileId)
         {
             var profiles = await _userProfileRepository.FindAsync(a => a.ProfileId == profileId);
@@ -118,19 +152,21 @@ namespace IWeddySupport.Service
             if(users != null)
             {
                 var user = users.FirstOrDefault();
-                user.UserRequestRejected =! user.UserRequestAccepted;
+               
                 if(user.RequesterProfileId==us.RequesterProfileId)//requester 
                 {
                     return user;    
                 }
                 //expecter
-                if (us.UserRequestRejected)
+               
+                if (us.UserRequestAccepted||user.UserRequestAccepted&&!us.UserRequestRejected) 
                 {
-                    us.UserRequestAccepted = !us.UserRequestRejected;
+                    us.UserRequestRejected = false; 
                 }
                 else
                 {
-                    us.UserRequestRejected=!us.UserRequestAccepted;
+                    us.UserRequestAccepted = false;
+                    us.UserRequestRejected = true;
                 }
                 await _userRequestReository.UpdateAsync(us);
                 
@@ -166,15 +202,17 @@ namespace IWeddySupport.Service
             return result.FirstOrDefault();
         }
 
-        public async Task<Profile> CreateProfileAsync(Profile profile)
+        public async Task<Profile> CreateOrGetProfileAsync(Profile profile)
         {
-            if (profile == null)
-            {
-                throw new ArgumentNullException(nameof(profile), "Profile cannot be null.");
-            }
 
-            var result = await _profileRepository.AddAsync(profile);
-            return profile; // Assuming AddAsync saves and returns the entity.
+           
+            var profiles = await _profileRepository.FindAsync(a=>a.Email==profile.Email&&a.FullName==profile.FullName&&a.PhoneNumber==profile.PhoneNumber&&a.UserId==profile.UserId);
+            if (!profiles.Any())
+            {
+                var result = await _profileRepository.AddAsync(profile);
+                return profile; // Assuming AddAsync saves and returns the entity.
+            }
+            return profiles.FirstOrDefault();
         }
 
         public async Task<Profile> UpdateProfileAsync( Profile profile)

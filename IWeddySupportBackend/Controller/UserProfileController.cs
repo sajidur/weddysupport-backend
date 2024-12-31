@@ -14,31 +14,31 @@ namespace IWeddySupport.Controller
     //[Authorize]
     [ApiController]
     [Route("[controller]")]
-    public class UserProfileController: ControllerBase
+    public class UserProfileController : ControllerBase
     {
         private readonly IUserService _userService;
-        private readonly IProfilePhotoRepository _profilePhotoRepository;   
-        
-        public UserProfileController(IUserService userService,IProfilePhotoRepository profilePhotoRepository)
+        private readonly IProfilePhotoRepository _profilePhotoRepository;
+
+        public UserProfileController(IUserService userService, IProfilePhotoRepository profilePhotoRepository)
         {
             _userService = userService;
-            _profilePhotoRepository = profilePhotoRepository;   
+            _profilePhotoRepository = profilePhotoRepository;
         }
         [HttpGet("GetAllData")]
         public async Task<IActionResult> GetAllData()
         {
             var profiles = await _userService.GetAllProfilesAsyncByDefault();
-            var addresses=await _userService.GetAllAddressAsyncByDefault();
-            var expectedPartners=await _userService.GetAllExpectedPartnersAsyncByDefault(); 
+            var addresses = await _userService.GetAllAddressAsyncByDefault();
+            var expectedPartners = await _userService.GetAllExpectedPartnersAsyncByDefault();
             var profilePhotos = await _userService.GetAllProfilePhotosAsyncByDefault();
             var userProfiles = await _userService.GetAllUserProfilesByDefault();
             var data = new
             {
                 profiles = profiles,
                 addresses = addresses,
-                userProfiles=userProfiles,
-                profilePhotos= profilePhotos,
-                expectedPartners=expectedPartners   
+                userProfiles = userProfiles,
+                profilePhotos = profilePhotos,
+                expectedPartners = expectedPartners
 
             };
             return Ok(data);
@@ -53,7 +53,49 @@ namespace IWeddySupport.Controller
             var userId = user.FindFirst("Id")?.Value;
             var email = user.FindFirst("Email")?.Value;
             var profiles = await _userService.GetAllProfilesAsync(userId);
-            return Ok(profiles);
+            var photos = await _userService.GetAllProfilePhotoAsync(userId);
+            //Map profiles with photo URLs
+            var profilesWithPhotos = profiles.Select(profile =>
+             {
+                 var matchingPhoto = photos.FirstOrDefault(photo => photo.ProfileId == profile.Id.ToString());
+                 return new ProfileWithPhoto
+                 {
+                     Id = profile.Id.ToString(),
+                     isPublic = profile.isPublic,
+                     FullName = profile.FullName,
+                     DateOfBirth = profile.DateOfBirth,
+                     Gender = profile.Gender,
+                     PhoneNumber = profile.PhoneNumber,
+                     Email = profile.Email,
+                     Nationality = profile.Nationality,
+                     Religion = profile.Religion,
+                     Occupation = profile.Occupation,
+                     YearlySalary = profile.YearlySalary,
+                     CompanyOrInstituteName = profile.CompanyOrInstituteName,
+                     MaritalStatus = profile.MaritalStatus,
+                     Declaration = profile.Declaration,
+                     SkinTone = profile.SkinTone,
+                     Height = profile.Height,
+                     Weight = profile.Weight,
+                     BloodGroup = profile.BloodGroup,
+                     PrayerHabit = profile.PrayerHabit,
+                     CanReciteQuranProperly = profile.CanReciteQuranProperly,
+                     HasMentalOrPhysicalIllness = profile.HasMentalOrPhysicalIllness,
+                     IsFatherAlive = profile.IsFatherAlive,
+                     FatherOccupationDetails = profile.FatherOccupationDetails,
+                     IsMotherAlive = profile.IsMotherAlive,
+                     MotherOccupationDetails = profile.MotherOccupationDetails,
+                     NumberOfBrothers = profile.NumberOfBrothers,
+                     NumberOfSisters = profile.NumberOfSisters,
+                     FamilyDetails = profile.FamilyDetails,
+                     FamilyEconomicsCondition = profile.FamilyEconomicsCondition,
+                     FamilyReligiousEnvironment = profile.FamilyReligiousEnvironment,
+                     UserId = profile.UserId,
+                     PhotoUrl = matchingPhoto?.PhotoUrl // Attach the photo URL
+                 };
+             }).ToList();
+
+            return Ok(profilesWithPhotos);
         }
         [HttpPost("profileRequest")]
         public async Task<IActionResult> ProfileRequestAsync([FromBody] UserRequestViewModel usR)
@@ -71,18 +113,18 @@ namespace IWeddySupport.Controller
             {
                 Id = Guid.NewGuid(),
                 CreatedDate = DateTime.Now,
-                RequesterUserId=usR.RequesterUserId,
-                RequesterProfileId=usR.RequesterProfileId,  
-                ExpacterProfileId=usR.RequesterProfileId,
-                ExpacterUserId=usR.RequesterUserId,
-                UserRequestAccepted=usR.UserRequestAccepted,    
-                UserRequestRejected=usR.UserRequestRejected
+                RequesterUserId = usR.RequesterUserId,
+                RequesterProfileId = usR.RequesterProfileId,
+                ExpacterProfileId = usR.RequesterProfileId,
+                ExpacterUserId = usR.RequesterUserId,
+                UserRequestAccepted = usR.UserRequestAccepted,
+                UserRequestRejected = usR.UserRequestRejected
 
             };
             var ussR = await _userService.AddOrGetUserRequestAsync(usr);
             return Ok(ussR);
         }
-  
+
         [HttpGet("getSingleProfile")]
         public async Task<IActionResult> GetProfileById(string id)
         {
@@ -92,18 +134,13 @@ namespace IWeddySupport.Controller
             }
 
             var profile = await _userService.GetProfileByIdAsync(id);
-            if(profile == null)
+            if (profile == null)
             {
                 return NotFound($"Profile with ID {id} not found.");
-            }
-            //string baseUrl = "https://api.weddy.support/UserProfile/"; // Replace with your actual base URL
-            //string filePath = "uploads\\6fb0492c-be6b-4ad2-b7d7-c722dea3aa30.jpg"; // From the API response
-            //string publicUrl = baseUrl + filePath.Replace("\\", "/");
-            //Console.WriteLine(publicUrl); // Outputs: https://cdn.weddy.support/uploads/6fb0492c-be6b-4ad2-b7d7-c722dea3aa30.jpg
-
-            var photos =await _userService.GetProfilePhotoByProfileIdAsync(id);
-            var address=await _userService.GetProfileAddressByProfileIdAsync(id); 
-            var userRelationship=await _userService.GetUserProfileByProfileIdAsync(id);
+            }            
+            var photos = await _userService.GetProfilePhotoByProfileIdAsync(id);
+            var address = await _userService.GetProfileAddressByProfileIdAsync(id);
+            var userRelationship = await _userService.GetUserProfileByProfileIdAsync(id);
             var data = new
             {
                 profile = profile,
@@ -114,7 +151,7 @@ namespace IWeddySupport.Controller
             };
             return Ok(data);
         }
-     
+
         [HttpPost("addProfile")]
         public async Task<IActionResult> CreateProfile([FromBody] ProfileViewModel profile)
         {
@@ -132,17 +169,17 @@ namespace IWeddySupport.Controller
             // Optionally retrieve user ID if needed
             var userId = user.FindFirst("Id")?.Value;
             var email = user.FindFirst("Email")?.Value;
-           
+
             try
             {
                 // Map the ProfileViewModel to a Profile entity
                 var newProfile = new Profile
                 {
-                    Id=Guid.NewGuid(),
-                    CreatedDate = DateTime.Now, 
-                    UserId =userId,
+                    Id = Guid.NewGuid(),
+                    CreatedDate = DateTime.Now,
+                    UserId = userId,
                     isPublic = profile.isPublic,
-                    SkinTone= profile.SkinTone, 
+                    SkinTone = profile.SkinTone,
                     FullName = profile.FullName,
                     DateOfBirth = profile.DateOfBirth,
                     Gender = profile.Gender,
@@ -173,7 +210,7 @@ namespace IWeddySupport.Controller
                 };
 
                 // Create the profile using the service
-                var createdProfile = await _userService.CreateProfileAsync(newProfile);
+                var createdProfile = await _userService.CreateOrGetProfileAsync(newProfile);
 
                 // Return 201 Created with the created profile data
                 return CreatedAtAction(nameof(GetProfileById), new { id = createdProfile.UserId }, createdProfile);
@@ -207,14 +244,14 @@ namespace IWeddySupport.Controller
                 {
                     return BadRequest("No such profile exists!");
                 }
-               
+
                 // Map the data from ProfileUpdateViewModel to the existing Profile entity
                 existingProfile.BloodGroup = profile.BloodGroup;
                 existingProfile.CanReciteQuranProperly = profile.CanReciteQuranProperly;
                 existingProfile.PhoneNumber = profile.PhoneNumber;
                 existingProfile.Occupation = profile.Occupation;
                 existingProfile.YearlySalary = profile.YearlySalary;
-                existingProfile.SkinTone= profile.SkinTone; 
+                existingProfile.SkinTone = profile.SkinTone;
                 existingProfile.CompanyOrInstituteName = profile.CompanyOrInstituteName;
                 existingProfile.MaritalStatus = profile.MaritalStatus;
                 existingProfile.Declaration = profile.Declaration;
@@ -231,7 +268,7 @@ namespace IWeddySupport.Controller
                 existingProfile.FamilyDetails = profile.FamilyDetails;
                 existingProfile.FamilyEconomicsCondition = profile.FamilyEconomicsCondition;
                 existingProfile.FamilyReligiousEnvironment = profile.FamilyReligiousEnvironment;
-                existingProfile.isPublic=profile.isPublic;
+                existingProfile.isPublic = profile.isPublic;
                 existingProfile.UpdatedDate = DateTime.Now;
                 // Update the profile using the service
                 var updatedProfile = await _userService.UpdateProfileAsync(existingProfile);
@@ -251,7 +288,7 @@ namespace IWeddySupport.Controller
 
 
         [HttpDelete("deleteProfile")]
-       public async Task<IActionResult> DeleteProfile(string id)
+        public async Task<IActionResult> DeleteProfile(string id)
         {
             if (string.IsNullOrWhiteSpace(id))
             {
@@ -261,7 +298,7 @@ namespace IWeddySupport.Controller
             try
             {
                 var isDeleted = await _userService.DeleteProfileAsync(id);
-                if (isDeleted==null)
+                if (isDeleted == null)
                 {
                     return StatusCode(500, "Failed to delete the profile.");
                 }
@@ -273,8 +310,8 @@ namespace IWeddySupport.Controller
                 return NotFound(ex.Message);
             }
         }
-        
-       [HttpGet("getAllAddress")]
+
+        [HttpGet("getAllAddress")]
         public async Task<IActionResult> GetAllAddress()
         {
             // Retrieve user from context
@@ -283,7 +320,7 @@ namespace IWeddySupport.Controller
             var userId = user.FindFirst("Id")?.Value;
             var email = user.FindFirst("Email")?.Value;
             var addresses = await _userService.GetAllAddressesAsync(userId);
-            
+
             return Ok(addresses);
         }
 
@@ -291,7 +328,7 @@ namespace IWeddySupport.Controller
         public async Task<IActionResult> CreateAddress([FromBody] AddressViewModel addressViewModel)
         {
             // Validate the incoming model
-            if (!ModelState.IsValid)
+            if(!ModelState.IsValid)
             {
                 return BadRequest(new
                 {
@@ -304,6 +341,15 @@ namespace IWeddySupport.Controller
             // Optionally retrieve user ID if needed
             var userId = user.FindFirst("Id")?.Value;
             var email = user.FindFirst("Email")?.Value;
+            var existingAddress=await _userService.GetAddressByProfileIdAsync(userId, addressViewModel.ProfileId);
+            if (existingAddress != null)
+            {
+                return Ok(new
+                {
+                    message = "Already existed address data.",
+                    Address = existingAddress
+                });
+            }
             try
             {
                 // Map the AddressViewModel to an Address entity
@@ -331,7 +377,7 @@ namespace IWeddySupport.Controller
                 var createdAddress = await _userService.CreateAddressAsync(newAddress);
 
                 // Return 201 Created with the created address data
-                return Ok(createdAddress);  
+                return Ok(createdAddress);
             }
             catch (Exception ex)
             {
@@ -350,16 +396,26 @@ namespace IWeddySupport.Controller
         {
             if (!ModelState.IsValid)
             {
-                return BadRequest(ModelState);
+                return BadRequest(new
+                {
+                    message = "Invalid address data.",
+                    errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage))
+                });
             }
             var existedAddress = await _userService.GetAddressAsync(addressViewModel.Id);
-            if (existedAddress == null) { return BadRequest("No such address existed!"); }
+            if (existedAddress == null) {
+                return BadRequest(new
+                {
+                    message = "No such address existed!.",
+                    errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage))
+                });
+            }
             existedAddress.CurrentAddress.localAddress = addressViewModel.CurrentAddress.LocalAddress;
             existedAddress.CurrentAddress.Thana = addressViewModel.CurrentAddress.Thana;
             existedAddress.CurrentAddress.District = addressViewModel.CurrentAddress.District;
             existedAddress.UpdatedDate = DateTime.Now;
             var updatedAddress = await _userService.UpdateAddressAsync(existedAddress);
-            
+
             return Ok(updatedAddress);
         }
 
@@ -367,7 +423,7 @@ namespace IWeddySupport.Controller
         public async Task<IActionResult> DeleteAddress(string Id)
         {
             var result = await _userService.DeleteAddressAsync(Id);
-           
+
             return Ok(result);
         }
 
@@ -396,7 +452,7 @@ namespace IWeddySupport.Controller
 
         // POST: api/ProfilePhoto/addPhoto
         [HttpPost("uploadProfilePhoto")]
-        public async Task<IActionResult> UploadProfilePhotoAsync(IFormFile file,string profileId)
+        public async Task<IActionResult> UploadProfilePhotoAsync(IFormFile file, string profileId)
         {
             if (file == null || file.Length == 0)
             {
@@ -415,6 +471,15 @@ namespace IWeddySupport.Controller
             var user = HttpContext.User;
             // Optionally retrieve user ID if needed
             var userId = user.FindFirst("Id")?.Value;
+            var existedPhoto = await _userService.GetProfilePhotoByIdAsync(userId,profileId);
+            if(existedPhoto!=null)
+            {
+                return Ok(new
+                {
+                    message = "Already present profilePhoto with this profile.",
+                    Photo = existedPhoto
+                });
+            }
             try
             {
                 // Ensure the upload directory exists
@@ -447,17 +512,17 @@ namespace IWeddySupport.Controller
                     FileSize = file.Length,
                     UploadedAt = DateTime.UtcNow,
                     CreatedDate = DateTime.UtcNow,
-                    PhotoUrl = publicUrl   
+                    PhotoUrl = publicUrl
                 };
 
                 // Save the photo details in the database
-                var addedProfilePhoto=await _userService.CreateProfilePhotoAsync(profilePhoto);
+                var addedProfilePhoto = await _userService.CreateProfilePhotoAsync(profilePhoto);
                 // Return success response with the photo details
                 return Ok(new
                 {
                     message = "File uploaded successfully.",
                     addedProfilePhoto
-                  
+
                 });
             }
             catch (Exception ex)
@@ -487,7 +552,7 @@ namespace IWeddySupport.Controller
             }
 
             // Validate file extension
-            var allowedExtensions = new[] { ".png", ".jpg", ".jpeg", ".ico",".gif" };
+            var allowedExtensions = new[] { ".png", ".jpg", ".jpeg", ".ico", ".gif" };
             var fileExtension = Path.GetExtension(file.FileName).ToLowerInvariant();
 
             if (!allowedExtensions.Contains(fileExtension))
@@ -543,7 +608,7 @@ namespace IWeddySupport.Controller
                 {
                     message = "Profile photo updated successfully.",
                     photo = existingPhoto
-                   
+
                 });
             }
             catch (Exception ex)
@@ -587,7 +652,9 @@ namespace IWeddySupport.Controller
                 await _userService.DeleteProfilePhotoAsync(id);
 
                 // Return a success response
-                return Ok(new { message = "Profile photo deleted successfully.",
+                return Ok(new
+                {
+                    message = "Profile photo deleted successfully.",
                     existingPhoto
                 });
             }
@@ -633,6 +700,15 @@ namespace IWeddySupport.Controller
             // Optionally retrieve user ID if needed
             var userId = user.FindFirst("Id")?.Value;
             var email = user.FindFirst("Email")?.Value;
+            var existedUserProfile=await _userService.GetUserProfileByProfileIdAsync(userId, userProfileViewModel.ProfileId);
+            if (existedUserProfile != null)
+            {
+                return Ok(new
+                {
+                    message = "Already existed user profile data.",
+                    UserProfile = existedUserProfile
+                });
+            }
             try
             {
                 // Map the UserProfileViewModel to a UserProfile entity
@@ -684,7 +760,7 @@ namespace IWeddySupport.Controller
                 }
 
                 // Update the entity with new values
-                existingUserProfile.UpdatedDate = DateTime.Now; 
+                existingUserProfile.UpdatedDate = DateTime.Now;
                 existingUserProfile.Relationship = userProfileViewModel.Relationship;
                 var updatedUserProfile = await _userService.UpdateUserProfileAsync(existingUserProfile);
                 return Ok(updatedUserProfile);
@@ -765,13 +841,22 @@ namespace IWeddySupport.Controller
             // Optionally retrieve user ID if needed
             var userId = user.FindFirst("Id")?.Value;
             var email = user.FindFirst("Email")?.Value;
+            var existedPartner=await _userService.GetExpectedPartnerByProfileIdAsync(userId,expectedPartnerViewModel.ProfileId);
+            if (existedPartner != null)
+            {
+                return Ok (new
+                {
+                    message = "Already existed partner data.",
+                    ExpectedPartner = existedPartner
+                });
+            }
             try
             {
                 // Map the view model to the entity
                 var newPartner = new PartnerExpectation
                 {
-                    Id=Guid.NewGuid(),
-                    CreatedDate= DateTime.Now,  
+                    Id = Guid.NewGuid(),
+                    CreatedDate = DateTime.Now,
                     UserId = userId,
                     ProfileId = expectedPartnerViewModel.ProfileId,
                     MinAge = expectedPartnerViewModel.MinAge,
@@ -814,7 +899,7 @@ namespace IWeddySupport.Controller
                 }
 
                 // Map the view model to the entity for update
-                existingPartner.UpdatedDate= DateTime.Now;  
+                existingPartner.UpdatedDate = DateTime.Now;
                 existingPartner.MinAge = expectedPartnerViewModel.MinAge;
                 existingPartner.MaxAge = expectedPartnerViewModel.MaxAge;
                 existingPartner.SkinTone = expectedPartnerViewModel.SkinTone;
@@ -850,6 +935,47 @@ namespace IWeddySupport.Controller
 
 
     }
+    public class ProfileWithPhoto
+    {
+        public string Id { get; set; }
+        public bool isPublic { get; set; }
+        public string FullName { get; set; }
+        public DateTime DateOfBirth { get; set; }
+        public string Gender { get; set; }
+        public string PhoneNumber { get; set; }
+        public string Email { get; set; }
+        public string Nationality { get; set; }
+        public string Religion { get; set; }
+        public string Occupation { get; set; } // "পেশা"
+        public int YearlySalary { get; set; }
+        public string CompanyOrInstituteName { get; set; }
+        public string MaritalStatus { get; set; }
+        public string Declaration { get; set; }
+        public string SkinTone { get; set; } // Preferred skin tones (e.g., "শ্যামলা, উজ্জল শ্যামলা, ফর্সা")
+                                             // Shamla (শ্যামলা): Dusky or wheatish complexion. Forsha(ফর্সা) : Fair complexion. Kala(কালা): Dark or black complexion.
+        public int Height { get; set; }
+        public string Weight { get; set; }
+        public string BloodGroup { get; set; }
+        // public string ClothingPreferenceOutside { get; set; } // "ঘরের বাহিরে সাধারণত কি ধরণের পোষাক পরেন?"
+        public string PrayerHabit { get; set; } // "প্রতিদিন পাঁচ ওয়াক্ত নামাজ পড়েন কি? কবে থেকে পড়ছেন?"
+        public bool CanReciteQuranProperly { get; set; } // "শুদ্ধভাবে কুরআন তিলওয়াত করতে পারেন?"
+        public bool HasMentalOrPhysicalIllness { get; set; } // "আপনার মানসিক বা শারীরিক কোনো রোগ আছে?"
+        public bool IsFatherAlive { get; set; } // "পিতা জীবিত?"
+        public string FatherOccupationDetails { get; set; } // "পিতার পেশার বিস্তারিত বিবরণ"
+        public bool IsMotherAlive { get; set; } // "মাতা জীবিত?"
+        public string MotherOccupationDetails { get; set; } // "মাতার পেশার বিস্তারিত বিবরণ"
+        public int NumberOfBrothers { get; set; } // "ভাইয়ের সংখ্যা"
+
+        [Range(0, int.MaxValue, ErrorMessage = "Number of sisters must be a non-negative integer.")]
+        public int NumberOfSisters { get; set; } // "বোনের সংখ্যা"
+        public string FamilyDetails { get; set; }
+        public string FamilyEconomicsCondition { get; set; } // "পরিবারের আর্থিক অবস্থা"
+                                                             // public string FamilyEconomicsDetails { get; set; } // "পরিবারের আর্থিক অবস্থা বিস্তারিত"
+        public string FamilyReligiousEnvironment { get; set; } // "পরিবারের ধর্মীয় পরিবেশ"
+        public string UserId { get; set; }
+        public string PhotoUrl { get; set; }
+    }
+
     public class SearchKeyViewModel
     {
         public string SkinTon { get; set; }
