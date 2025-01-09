@@ -266,8 +266,14 @@ namespace IWeddySupport.Migrations
                         .Annotation("MySql:CharSet", "utf8mb4"),
                     ExpacterUserId = table.Column<string>(type: "longtext", nullable: false)
                         .Annotation("MySql:CharSet", "utf8mb4"),
-                    UserRequestAccepted = table.Column<bool>(type: "tinyint(1)", nullable: false),
-                    UserRequestRejected = table.Column<bool>(type: "tinyint(1)", nullable: false),
+                    UserRequestAccepted = table.Column<string>(type: "longtext", nullable: true)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    UserRequestRejected = table.Column<string>(type: "longtext", nullable: true)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    ApplicationStatus = table.Column<string>(type: "longtext", nullable: false)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
+                    Message = table.Column<string>(type: "longtext", nullable: true)
+                        .Annotation("MySql:CharSet", "utf8mb4"),
                     CreatedDate = table.Column<DateTime>(type: "datetime(6)", nullable: false),
                     UpdatedDate = table.Column<DateTime>(type: "datetime(6)", nullable: true),
                     IsActive = table.Column<bool>(type: "tinyint(1)", nullable: false),

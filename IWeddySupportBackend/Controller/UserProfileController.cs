@@ -11,7 +11,7 @@ using System.Text.RegularExpressions;
 
 namespace IWeddySupport.Controller
 {
-    //[Authorize]
+    [Authorize]
     [ApiController]
     [Route("[controller]")]
     public class UserProfileController : ControllerBase
@@ -97,6 +97,27 @@ namespace IWeddySupport.Controller
 
             return Ok(profilesWithPhotos);
         }
+
+        [HttpPost("autoProfilesRequestedOrResponsed")]
+        public async Task<IActionResult> autoProfilesRequestedOrResponsed([FromBody] GetProfiles profile)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(new
+                {
+                    message = "Invalid profile data.",
+                    errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage))
+                });
+            }
+            var profilesRequested = await _userService.GetAllRequestedProfileAsync(profile.ProfileId);
+            var profilesResponed = await _userService.GetAllResponsedProfileAsync(profile.ProfileId);
+            return Ok(new
+            {
+                RequestedByYou = profilesResponed,
+                RequestedForYou= profilesRequested
+            });
+        }
+
         [HttpPost("profileRequest")]
         public async Task<IActionResult> ProfileRequestAsync([FromBody] UserRequestViewModel usR)
         {
@@ -108,23 +129,144 @@ namespace IWeddySupport.Controller
                     errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage))
                 });
             }
-            //var user = HttpContext.User;
+            // Retrieve user from context
+            var user = HttpContext.User;
+            // Optionally retrieve user ID if needed
+            var userId = user.FindFirst("Id")?.Value;
             var usr = new UserRequest
             {
                 Id = Guid.NewGuid(),
                 CreatedDate = DateTime.Now,
-                RequesterUserId = usR.RequesterUserId,
+                RequesterUserId = userId,
                 RequesterProfileId = usR.RequesterProfileId,
                 ExpacterProfileId = usR.RequesterProfileId,
-                ExpacterUserId = usR.RequesterUserId,
-                UserRequestAccepted = usR.UserRequestAccepted,
-                UserRequestRejected = usR.UserRequestRejected
-
+                ExpacterUserId = usR.ExpacterUserId,
+                UserRequestAccepted = null,
+                UserRequestRejected = null,
+                ApplicationStatus=usR.ApplicationStatus
             };
             var ussR = await _userService.AddOrGetUserRequestAsync(usr);
-            return Ok(ussR);
-        }
+            if (ussR!=null)
+            {
+                if (ussR.UserRequestAccepted == "yes")
+                {
+                    var profileData = await GetProfileById(ussR.ExpacterProfileId);
 
+                    return Ok(new
+                    {
+                        Request = ussR,
+                        ProfileData = profileData
+                    });
+                }
+                return Ok(new
+                {
+                    message = "UserRequest data is sent successfully.",
+                    UserRequest = ussR
+                });
+            }
+
+           
+                return BadRequest(new
+                {
+                    message = "Failed to insert or update data.",
+                    errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage))
+                });
+            
+        }
+        [HttpPost("acceptOrReject")]
+        public async Task<IActionResult> profileAcceptOrReject(ProfileAcceptOrReject res)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(new
+                {
+                    message = "Invalid profile data.",
+                    errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage))
+                });
+            }
+            // Retrieve user from context
+            var user = HttpContext.User;
+            // Optionally retrieve user ID if needed
+            var userId = user.FindFirst("Id")?.Value;
+            var HasAnyRequest = await _userService.GetRequestedProfileAsync(res.RequesterUserId, res.RequesterProfileId);
+            if (HasAnyRequest == null)
+            {
+                return Ok(null);
+            }
+            HasAnyRequest.UpdatedDate = DateTime.UtcNow;
+            HasAnyRequest.UserRequestRejected = res.RequestRejected;
+            HasAnyRequest.UserRequestAccepted = res.RequestAccepted;
+            //HasAnyRequest.ExpacterProfileId = res.MyProfileId;
+            //HasAnyRequest.ExpacterUserId = userId;
+            //HasAnyRequest.RequesterProfileId = res.RequesterProfileId;
+            //HasAnyRequest.RequesterUserId = res.RequesterUserId;
+            if (res.RequestAccepted == "yes")
+            {
+                HasAnyRequest.Message = "Accepted the request!";
+            }
+            else if (res.RequestRejected == "yes")
+            {
+                HasAnyRequest.Message = "Rejected the request!";
+
+            }
+            else
+            {
+                HasAnyRequest.Message = "No response!";
+
+
+            }
+            var updatedRequest = await _userService.UpdatedUserRequestAsync(HasAnyRequest);
+
+            //// Prepare additional data if accepted
+            //if (res.RequestAccepted == "yes")
+            //{
+            //    var profileData = await GetProfileById(res.MyProfileId);
+               
+            //    return Ok(new
+            //    {
+            //        Request = updatedRequest,
+            //        ProfileData = profileData
+            //    });
+            //}
+
+            return Ok(new { Request = updatedRequest });
+
+        }
+        [HttpPost("getResponse")]
+        public async Task<IActionResult> GetResponseFromUser(ProfileResponse res)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(new
+                {
+                    message = "Invalid profile data.",
+                    errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage))
+                });
+            }
+            // Retrieve user from context
+            var user = HttpContext.User;
+            // Optionally retrieve user ID if needed
+            var userId = user.FindFirst("Id")?.Value;
+            var HasAnyResponse = await _userService.GetResponserProfileAsync(res.ResponserUserId, res.ResponserProfileId);
+            if (HasAnyResponse == null)
+            {
+                return Ok(null);
+            }
+            HasAnyResponse.UpdatedDate = DateTime.UtcNow;
+            // Prepare additional data if accepted
+            if (HasAnyResponse.UserRequestAccepted == "yes")
+            {
+                var profileData = await GetProfileById(res.ResponserProfileId);
+
+                return Ok(new
+                {
+                    Request = HasAnyResponse,
+                    ProfileData = profileData
+                });
+            }
+
+            return Ok(new { Request = HasAnyResponse });
+        }
         [HttpGet("getSingleProfile")]
         public async Task<IActionResult> GetProfileById(string id)
         {
@@ -137,7 +279,7 @@ namespace IWeddySupport.Controller
             if (profile == null)
             {
                 return NotFound($"Profile with ID {id} not found.");
-            }            
+            }
             var photos = await _userService.GetProfilePhotoByProfileIdAsync(id);
             var address = await _userService.GetProfileAddressByProfileIdAsync(id);
             var userRelationship = await _userService.GetUserProfileByProfileIdAsync(id);
@@ -975,7 +1117,10 @@ namespace IWeddySupport.Controller
         public string UserId { get; set; }
         public string PhotoUrl { get; set; }
     }
-
+    public class GetProfiles
+    {
+        public string ProfileId { get; set; }
+    }
     public class SearchKeyViewModel
     {
         public string SkinTon { get; set; }

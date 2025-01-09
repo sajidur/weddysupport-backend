@@ -52,7 +52,11 @@ namespace IWeddySupport.Service
         Task<ProfilePhoto> GetProfilePhotoByIdAsync(string userId, string profileId);
         Task<UserProfile> GetUserProfileByProfileIdAsync(string userId, string profileId);
         Task<PartnerExpectation> GetExpectedPartnerByProfileIdAsync(string userId, string profileId);
-
+        Task<UserRequest> GetRequestedProfileAsync(string userId, string profileId);
+        Task<UserRequest> GetResponserProfileAsync(string userId, string profileId);
+        Task<UserRequest> UpdatedUserRequestAsync(UserRequest us);
+        Task<List<UserRequest>> GetAllRequestedProfileAsync(string id);
+        Task<List<UserRequest>> GetAllResponsedProfileAsync(string id);
     }
 
     public class UserService : IUserService
@@ -73,6 +77,40 @@ namespace IWeddySupport.Service
             _expectedPartnerRepository = expectedPartnerRepository; 
             _userRequestReository = userRequest;
         }
+        public async Task<List<UserRequest>> GetAllRequestedProfileAsync(string id)
+        {
+            var profiles=await _userRequestReository.FindAsync(a=>a.RequesterProfileId==id);
+            if(profiles==null)
+            {
+                return null;
+            }
+            return profiles.ToList();   
+        }
+        public async Task<List<UserRequest>> GetAllResponsedProfileAsync(string id)
+        {
+            var profiles = await _userRequestReository.FindAsync(a => a.ExpacterProfileId == id);
+            if (profiles == null)
+            {
+                return null;
+            }
+            return profiles.ToList();
+        }
+        public async Task<UserRequest> GetRequestedProfileAsync(string userId, string profileId)
+        {
+            var profiles=await _userRequestReository.FindAsync(a=>a.RequesterProfileId==profileId&&a.RequesterUserId==userId);
+            return profiles.FirstOrDefault();
+        }
+        public async Task<UserRequest> GetResponserProfileAsync(string userId, string profileId)
+        {
+            var profiles = await _userRequestReository.FindAsync(a => a.ExpacterProfileId == profileId && a.ExpacterUserId == userId);
+            return profiles.FirstOrDefault();
+        }
+        public async Task<UserRequest> UpdatedUserRequestAsync(UserRequest us)
+        {
+            await _userRequestReository.UpdateAsync(us);    
+            return us;  
+        }
+
         public async Task<Address> GetAddressByProfileIdAsync(string userId, string profileId)
         {
             var addresses = await _addressRepository.FindAsync(a => a.UserId == userId && a.ProfileId == profileId);
@@ -148,33 +186,32 @@ namespace IWeddySupport.Service
         }
         public async Task<UserRequest> AddOrGetUserRequestAsync(UserRequest us)
         {
-            var users = await _userRequestReository.FindAsync(a=>a.ExpacterProfileId==us.RequesterProfileId||a.RequesterProfileId==us.RequesterProfileId);  
+            var users = await _userRequestReository.FindAsync(a=>a.RequesterProfileId==us.RequesterProfileId);  
             if(users != null)
             {
                 var user = users.FirstOrDefault();
                
-                if(user.RequesterProfileId==us.RequesterProfileId)//requester 
+                us.UpdatedDate = DateTime.Now;
+                if (user.UserRequestAccepted == "yes")
                 {
-                    return user;    
+                   // us.UserRequestRejected = "no";
+                    us.Message = "User has already responsed with affarmative way";
                 }
-                //expecter
-               
-                if (us.UserRequestAccepted||user.UserRequestAccepted&&!us.UserRequestRejected) 
+                else if (user.UserRequestRejected == "yes")
                 {
-                    us.UserRequestRejected = false; 
+                    //us.UserRequestAccepted = "no";
+                    us.Message = "User has already responsed with negative way";
                 }
                 else
                 {
-                    us.UserRequestAccepted = false;
-                    us.UserRequestRejected = true;
+                    us.Message = "No response!";
                 }
                 await _userRequestReository.UpdateAsync(us);
                 
             }
             else
             {
-                us.UserRequestRejected = true;
-                us.UserRequestAccepted = !us.UserRequestRejected;
+                us.Message = "First time user has requested";
                 await _userRequestReository.AddAsync(us);   
             }
             return us;

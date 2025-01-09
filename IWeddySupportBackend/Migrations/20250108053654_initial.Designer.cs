@@ -12,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace IWeddySupport.Migrations
 {
     [DbContext(typeof(IWeddySupportDbContext))]
-    [Migration("20241230151316_initial")]
+    [Migration("20250108053654_initial")]
     partial class initial
     {
         /// <inheritdoc />
@@ -443,6 +443,10 @@ namespace IWeddySupport.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("char(36)");
 
+                    b.Property<string>("ApplicationStatus")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
                     b.Property<DateTime>("CreatedBy")
                         .HasColumnType("datetime(6)");
 
@@ -463,6 +467,9 @@ namespace IWeddySupport.Migrations
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("tinyint(1)");
 
+                    b.Property<string>("Message")
+                        .HasColumnType("longtext");
+
                     b.Property<string>("Remarks")
                         .HasColumnType("longtext");
 
@@ -480,11 +487,11 @@ namespace IWeddySupport.Migrations
                     b.Property<DateTime?>("UpdatedDate")
                         .HasColumnType("datetime(6)");
 
-                    b.Property<bool>("UserRequestAccepted")
-                        .HasColumnType("tinyint(1)");
+                    b.Property<string>("UserRequestAccepted")
+                        .HasColumnType("longtext");
 
-                    b.Property<bool>("UserRequestRejected")
-                        .HasColumnType("tinyint(1)");
+                    b.Property<string>("UserRequestRejected")
+                        .HasColumnType("longtext");
 
                     b.HasKey("Id");
 

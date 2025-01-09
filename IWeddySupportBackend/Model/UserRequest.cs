@@ -6,8 +6,9 @@
         public string RequesterUserId { get; set; }
         public string ExpacterProfileId { get; set; }
         public string ExpacterUserId { get; set; }
-        public bool UserRequestAccepted { get; set; }
-        public bool UserRequestRejected { get; set; }
-
+        public string? UserRequestAccepted { get; set; }
+        public string? UserRequestRejected { get; set; }
+        public string ApplicationStatus {  get; set; }  
+        public string? Message { get; set; } = string.Empty;
     }
 }
