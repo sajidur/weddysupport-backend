@@ -957,7 +957,13 @@ namespace IWeddySupport.Controller
         [HttpPost("getExpectedPartnerBySearchKey")]
         public async Task<IActionResult> GetExpectedPartner([FromBody] SearchKeyViewModel keyViewModel)
         {
-            var partners = await _userService.GetExpectedPartnersByKeyAsync(keyViewModel);
+
+            // Retrieve user from context
+            var user = HttpContext.User;
+            // Optionally retrieve user ID if needed
+            var userId = user.FindFirst("Id")?.Value;
+            var email = user.FindFirst("Email")?.Value;
+            var partners = await _userService.GetExpectedPartnersByKeyAsync(keyViewModel,userId);
             if (partners == null)
             {
                 return NotFound("Partner preferences not found for the given UserId.");

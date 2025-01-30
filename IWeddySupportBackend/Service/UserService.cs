@@ -39,7 +39,7 @@ namespace IWeddySupport.Service
         Task<PartnerExpectation> CreateExpectedPartnerAsync(PartnerExpectation expectedPartner);
         Task<PartnerExpectation> UpdateExpectedPartnerAsync(PartnerExpectation expectedPartner);
         Task<PartnerExpectation> DeleteExpectedPartnerAsync(string Id);
-        Task<IEnumerable<Profile>> GetExpectedPartnersByKeyAsync(SearchKeyViewModel key);
+        Task<IEnumerable<Profile>> GetExpectedPartnersByKeyAsync(SearchKeyViewModel key,string userId);
         Task<IEnumerable<Profile>> GetAllProfilesAsyncByDefault();
         Task<IEnumerable<UserProfile>> GetAllUserProfilesByDefault();
         Task<IEnumerable<ProfilePhoto>> GetAllProfilePhotosAsyncByDefault();
@@ -188,7 +188,7 @@ namespace IWeddySupport.Service
         public async Task<UserRequest> AddOrGetUserRequestAsync(UserRequest us)
         {
             var users = await _userRequestReository.FindAsync(a=>a.RequesterProfileId==us.RequesterProfileId);  
-            if(users != null)
+            if(users.Any())
             {
                 var user = users.FirstOrDefault();
                
@@ -263,7 +263,7 @@ namespace IWeddySupport.Service
         {
            
             var profiles = await _profileRepository.FindAsync(u=>u.Id==Guid.Parse(id));
-            if (profiles == null)
+            if (!profiles.Any())
             {
                 return null;
             }
@@ -299,7 +299,7 @@ namespace IWeddySupport.Service
         public async Task<Address> DeleteAddressAsync(string id)
         {
             var addresses = await _addressRepository.FindAsync(u => u.Id == Guid.Parse(id));
-            if (addresses == null)
+            if (!addresses.Any())
             {
                 return null;
             }
@@ -428,7 +428,7 @@ namespace IWeddySupport.Service
             return partnerToDelete;
         }
 
-        public async Task<IEnumerable<Profile>> GetExpectedPartnersByKeyAsync(SearchKeyViewModel key)
+        public async Task<IEnumerable<Profile>> GetExpectedPartnersByKeyAsync(SearchKeyViewModel key,string userId)
         {
             bool presentData = false, presentAddress = false;
             var currentDate = DateTime.Now;
@@ -444,7 +444,7 @@ namespace IWeddySupport.Service
             if (!string.IsNullOrEmpty(key.Gender)|| key.MinYearlySalary>0||key.MaxYearlySalary>0|| key.MinHeight>0||key.MaxHeight>0) {  presentData = true; }  
             // Query profiles based on key criteria
             var profiles = await _profileRepository.FindAsync(p =>
-                (string.IsNullOrEmpty(key.SkinTon) || (p.SkinTone != null && p.SkinTone.ToLower().Contains(key.SkinTon.ToLower()))) &&
+                ((string.IsNullOrEmpty(key.SkinTon) || (p.SkinTone != null && p.SkinTone.ToLower().Contains(key.SkinTon.ToLower()))) &&
                 (string.IsNullOrEmpty(key.BloodGroup) || (p.BloodGroup != null && p.BloodGroup.ToLower().Contains(key.BloodGroup.ToLower()))) &&
                 (string.IsNullOrEmpty(key.Occupation) || (p.Occupation != null && p.Occupation.ToLower().Contains(key.Occupation.ToLower()))) &&
                 (string.IsNullOrEmpty(key.Religious) || (p.Religion != null && p.Religion.ToLower().Contains(key.Religious.ToLower()))) &&
@@ -458,7 +458,7 @@ namespace IWeddySupport.Service
                 (key.MaxYearlySalary<=0||key.MaxYearlySalary>0&& p.YearlySalary <= key.MaxYearlySalary) &&
                 (key.MinHeight<=0||key.MinHeight>0&& p.Height >= key.MinHeight) &&
                 (key.MaxHeight<=0||key.MaxHeight>0 &&p.Height <= key.MaxHeight) &&
-                (p.CanReciteQuranProperly == key.CanReciteQuranProperly)
+                (p.CanReciteQuranProperly == key.CanReciteQuranProperly))&&(p.UserId!=userId)
             );
 
             if (!string.IsNullOrEmpty(key.LocalAddress) || !string.IsNullOrEmpty(key.Thana)|| !string.IsNullOrEmpty(key.District)|| !string.IsNullOrEmpty(key.LocalAddress)|| !string.IsNullOrEmpty(key.Thana)|| !string.IsNullOrEmpty(key.District))
@@ -472,12 +472,14 @@ namespace IWeddySupport.Service
             if (presentAddress)
             {
                 var addressResults = await _addressRepository.FindAsync(a =>
-                    (string.IsNullOrEmpty(key.LocalAddress) || (!string.IsNullOrEmpty(key.LocalAddress) && a.CurrentAddress.localAddress != null && a.CurrentAddress.localAddress.ToLower().Contains(key.LocalAddress.ToLower()))&&
+                    ((string.IsNullOrEmpty(key.LocalAddress) || (!string.IsNullOrEmpty(key.LocalAddress) && a.CurrentAddress.localAddress != null && a.CurrentAddress.localAddress.ToLower().Contains(key.LocalAddress.ToLower()))&&
                     (string.IsNullOrEmpty(key.Thana) || !string.IsNullOrEmpty(key.Thana) && a.CurrentAddress.Thana != null && a.CurrentAddress.Thana.ToLower().Contains(key.Thana.ToLower()))&&
                     (string.IsNullOrEmpty(key.District) || !string.IsNullOrEmpty(key.District) && a.CurrentAddress.District != null && a.CurrentAddress.District.ToLower().Contains(key.District.ToLower())))||
                     (string.IsNullOrEmpty(key.LocalAddress) || (!string.IsNullOrEmpty(key.LocalAddress) && a.PermanentAddress.localAddress != null && a.PermanentAddress.localAddress.ToLower().Contains(key.LocalAddress.ToLower()))&&
                     (string.IsNullOrEmpty(key.Thana) || !string.IsNullOrEmpty(key.Thana) && a.PermanentAddress.Thana != null && a.PermanentAddress.Thana.ToLower().Contains(key.Thana.ToLower())) &&
-                    (string.IsNullOrEmpty(key.District) || !string.IsNullOrEmpty(key.District) && a.PermanentAddress.District != null && a.PermanentAddress.District.ToLower().Contains(key.District.ToLower()))));
+                    (string.IsNullOrEmpty(key.District) || !string.IsNullOrEmpty(key.District) && a.PermanentAddress.District != null &&
+                    a.PermanentAddress.District.ToLower().Contains(key.District.ToLower()))))
+                    &&(a.UserId!=userId));
 
                 if (addressResults.Any())
                 {
