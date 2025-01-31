@@ -109,12 +109,13 @@ namespace IWeddySupport.Controller
                     errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage))
                 });
             }
+
             var profilesRequested = await _userService.GetAllRequestedProfileAsync(profile.ProfileId);
             var profilesResponed = await _userService.GetAllResponsedProfileAsync(profile.ProfileId);
             return Ok(new
             {
-                RequestedByYou = profilesResponed,
-                RequestedForYou= profilesRequested
+                RequestedByYou = profilesRequested,
+                RequestedForYou= profilesResponed
             });
         }
 
@@ -133,6 +134,25 @@ namespace IWeddySupport.Controller
             var user = HttpContext.User;
             // Optionally retrieve user ID if needed
             var userId = user.FindFirst("Id")?.Value;
+            var existedRequester=await _userService.GetProfileByIdAsync(usR.RequesterProfileId);
+            if (existedRequester == null)
+            {
+                return BadRequest(new
+                {
+                    message = "No such Profile has existed for sending request",
+                    errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage))
+                });
+
+            }
+            var existedExpecter = await _userService.GetProfileByIdAsync(usR.ExpacterProfileId);
+            if (existedRequester == null)
+            {
+                return BadRequest(new
+                {
+                    message = "No such Profile has existed to response for this request",
+                    errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage))
+                });
+            }
             var existedUserRequest = await _userService.GetUserRequestAsync(userId,usR.RequesterProfileId);
             if (existedUserRequest != null)
             {
@@ -177,7 +197,7 @@ namespace IWeddySupport.Controller
                 CreatedDate = DateTime.Now,
                 RequesterUserId = userId,
                 RequesterProfileId = usR.RequesterProfileId,
-                ExpacterProfileId = usR.RequesterProfileId,
+                ExpacterProfileId = usR.ExpacterProfileId,
                 ExpacterUserId = usR.ExpacterUserId,
                 UserRequestAccepted = null,
                 UserRequestRejected = null,
@@ -189,7 +209,7 @@ namespace IWeddySupport.Controller
             return Ok(new
             {
                 message = "UserRequest data is sent successfully.",
-                UserRequest = existedUserRequest
+                UserRequest = ussR
             });
 
           
