@@ -133,6 +133,44 @@ namespace IWeddySupport.Controller
             var user = HttpContext.User;
             // Optionally retrieve user ID if needed
             var userId = user.FindFirst("Id")?.Value;
+            var existedUserRequest = await _userService.GetUserRequestAsync(userId,usR.RequesterProfileId);
+            if (existedUserRequest != null)
+            {
+                existedUserRequest.UpdatedDate = DateTime.Now;
+                existedUserRequest.ApplicationStatus=usR.ApplicationStatus;
+                if (existedUserRequest.UserRequestAccepted == "yes")
+                {
+                    // us.UserRequestRejected = "no";
+                    existedUserRequest.Message = "User has already responsed with affarmative way";
+                }
+                else if (existedUserRequest.UserRequestRejected == "yes")
+                {
+                    //us.UserRequestAccepted = "no";
+                    existedUserRequest.Message = "User has already responsed with negative way";
+                }
+                else
+                {
+                    existedUserRequest.Message = "Already sent this request but has no response yet!";
+                }
+               await _userService.UpdatedUserRequestAsync(existedUserRequest);
+              
+                if (existedUserRequest.UserRequestAccepted == "yes")
+                    {
+                        var profileData = await GetProfileById(existedUserRequest.ExpacterProfileId);
+
+                        return Ok(new
+                        {
+                            Request = existedUserRequest,
+                            ProfileData = profileData
+                        });
+                    }
+                    return Ok(new
+                    {
+                        message = "UserRequest data is sent again successfully",
+                        UserRequest = existedUserRequest
+                    });
+                
+            }
             var usr = new UserRequest
             {
                 Id = Guid.NewGuid(),
@@ -145,33 +183,16 @@ namespace IWeddySupport.Controller
                 UserRequestRejected = null,
                 ApplicationStatus=usR.ApplicationStatus
             };
-            var ussR = await _userService.AddOrGetUserRequestAsync(usr);
-            if (ussR!=null)
-            {
-                if (ussR.UserRequestAccepted == "yes")
-                {
-                    var profileData = await GetProfileById(ussR.ExpacterProfileId);
-
-                    return Ok(new
-                    {
-                        Request = ussR,
-                        ProfileData = profileData
-                    });
-                }
-                return Ok(new
-                {
-                    message = "UserRequest data is sent successfully.",
-                    UserRequest = ussR
-                });
-            }
-
-           
-                return BadRequest(new
-                {
-                    message = "Failed to insert or update data.",
-                    errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage))
-                });
             
+            var ussR = await _userService.AddUserRequestAsync(usr);
+
+            return Ok(new
+            {
+                message = "UserRequest data is sent successfully.",
+                UserRequest = existedUserRequest
+            });
+
+          
         }
         [HttpPost("acceptOrReject")]
         public async Task<IActionResult> profileAcceptOrReject(ProfileAcceptOrReject res)

@@ -45,7 +45,7 @@ namespace IWeddySupport.Service
         Task<IEnumerable<ProfilePhoto>> GetAllProfilePhotosAsyncByDefault();
         Task<IEnumerable<Address>> GetAllAddressAsyncByDefault();
         Task<IEnumerable<PartnerExpectation>> GetAllExpectedPartnersAsyncByDefault();
-        Task<UserRequest> AddOrGetUserRequestAsync(UserRequest us);
+        Task<UserRequest> AddUserRequestAsync(UserRequest us);
         Task<ProfilePhoto> GetProfilePhotoByProfileIdAsync(string profileId);
         Task<UserProfile> GetUserProfileByProfileIdAsync(string profileId);
         Task<Address> GetProfileAddressByProfileIdAsync(string profileId);
@@ -58,6 +58,7 @@ namespace IWeddySupport.Service
         Task<UserRequest> UpdatedUserRequestAsync(UserRequest us);
         Task<List<UserRequest>> GetAllRequestedProfileAsync(string id);
         Task<List<UserRequest>> GetAllResponsedProfileAsync(string id);
+        Task<UserRequest> GetUserRequestAsync(string userId, string profileId);
     }
 
     public class UserService : IUserService
@@ -185,36 +186,22 @@ namespace IWeddySupport.Service
         {
             return await _addressRepository.GetAllAsync();
         }
-        public async Task<UserRequest> AddOrGetUserRequestAsync(UserRequest us)
+        public async Task<UserRequest> GetUserRequestAsync(string userId, string profileId)
         {
-            var users = await _userRequestReository.FindAsync(a=>a.RequesterProfileId==us.RequesterProfileId);  
-            if(users.Any())
+            var users = await _userRequestReository.FindAsync(a => a.RequesterProfileId == profileId&&a.RequesterUserId==userId);
+            if (users.Any())
             {
-                var user = users.FirstOrDefault();
-               
-                us.UpdatedDate = DateTime.Now;
-                if (user.UserRequestAccepted == "yes")
-                {
-                   // us.UserRequestRejected = "no";
-                    us.Message = "User has already responsed with affarmative way";
-                }
-                else if (user.UserRequestRejected == "yes")
-                {
-                    //us.UserRequestAccepted = "no";
-                    us.Message = "User has already responsed with negative way";
-                }
-                else
-                {
-                    us.Message = "No response!";
-                }
-                await _userRequestReository.UpdateAsync(us);
-                
+               return users.FirstOrDefault();
+    
             }
-            else
-            {
+            return null;
+        }
+        public async Task<UserRequest> AddUserRequestAsync(UserRequest us)
+        {
+           
                 us.Message = "First time user has requested";
                 await _userRequestReository.AddAsync(us);   
-            }
+            
             return us;
         }
 
