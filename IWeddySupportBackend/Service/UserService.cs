@@ -56,8 +56,8 @@ namespace IWeddySupport.Service
         Task<UserRequest> GetRequestedProfileAsync(string userId, string profileId);
         Task<UserRequest> GetResponserProfileAsync(string userId, string profileId);
         Task<UserRequest> UpdatedUserRequestAsync(UserRequest us);
-        Task<List<UserRequest>> GetAllRequestedProfileAsync(string id);
-        Task<List<UserRequest>> GetAllResponsedProfileAsync(string id);
+        Task<List<UserRequest>> GetAllRequestedProfileAsyncByMe(string id);
+        Task<List<UserRequest>> GetAllRequestedProfileAsyncForMe(string id);
         Task<UserRequest> GetUserRequestAsync(string userId, string profileId);
     }
 
@@ -79,16 +79,16 @@ namespace IWeddySupport.Service
             _expectedPartnerRepository = expectedPartnerRepository; 
             _userRequestReository = userRequest;
         }
-        public async Task<List<UserRequest>> GetAllRequestedProfileAsync(string id)
+        public async Task<List<UserRequest>> GetAllRequestedProfileAsyncByMe(string id)
         {
-            var profiles=await _userRequestReository.FindAsync(a=>a.RequesterProfileId==id);
+            var profiles=await _userRequestReository.FindAsync(a=>a.RequesterProfileId == id);
             if(profiles==null)
             {
                 return null;
             }
             return profiles.ToList();   
         }
-        public async Task<List<UserRequest>> GetAllResponsedProfileAsync(string id)
+        public async Task<List<UserRequest>> GetAllRequestedProfileAsyncForMe(string id)
         {
             var profiles = await _userRequestReository.FindAsync(a => a.ExpacterProfileId == id);
             if (profiles == null)

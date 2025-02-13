@@ -98,24 +98,77 @@ namespace IWeddySupport.Controller
             return Ok(profilesWithPhotos);
         }
 
-        [HttpPost("autoProfilesRequestedOrResponsed")]
-        public async Task<IActionResult> autoProfilesRequestedOrResponsed([FromBody] GetProfiles profile)
+        [HttpGet("autoProfilesRequestedOrResponsed")]
+        public async Task<IActionResult> autoProfilesRequestedOrResponsed()
         {
-            if (!ModelState.IsValid)
+            // Retrieve user from context
+            var user = HttpContext.User;
+            // Optionally retrieve user ID if needed
+            var userId = user.FindFirst("Id")?.Value;
+            var email = user.FindFirst("Email")?.Value;
+            var myProfiles = await _userService.GetAllProfilesAsync(userId);//take all of my created profile.
+            var requestedProfiles=new List<RequestedForYouDataModel>();
+            var Profile2 = new RequestedForYouDataModel();
+            var expectedProfiles = new List<RequestedByYouDataModel>();
+            var Profile1 = new RequestedByYouDataModel();
+            foreach (var pro in myProfiles)
             {
-                return BadRequest(new
+                if (pro== null) continue;
+                var profilesRequestedByMe = await _userService.GetAllRequestedProfileAsyncByMe(pro.Id.ToString());//whom i requested by me
+                var profilesRequestedForMe = await _userService.GetAllRequestedProfileAsyncForMe(pro.Id.ToString());//whose are requested for me.
+                foreach (var profile in profilesRequestedByMe)
                 {
-                    message = "Invalid profile data.",
-                    errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage))
-                });
+                    Profile1.ProfileId = pro.Id.ToString();
+                    Profile1.ProfileName = pro.FullName;
+                    Profile1.RequestRejected = profile.UserRequestRejected;
+                    Profile1.RequestAccepted = profile.UserRequestAccepted;
+                    Profile1.Message = profile.Message;
+                    Profile1.ExpecterProfileId = profile.ExpacterProfileId;
+                    Profile1.ExpecterUserId = profile.ExpacterUserId;
+                    var expacterProfile = await _userService.GetProfileByIdAsync(profile.ExpacterProfileId);
+                    if (expacterProfile != null)
+                    {
+                        Profile1.ExpecterName = expacterProfile.FullName;
+                        Profile1.ExpecterEmail = expacterProfile.Email;
+                    }
+                    var photos = await _userService.GetProfilePhotoAsync(profile.ExpacterProfileId);
+                    if (photos != null)
+                    {
+                        Profile1.ExpecterPhotoUrl = photos.PhotoUrl;
+                    }
+                   // Profile1.ExpecterUserId = expacterProfile.UserId;
+                    expectedProfiles.Add(Profile1);
+                }
+                foreach (var profile in profilesRequestedForMe)
+                {
+                    if (profile == null) continue;
+                    Profile2.ProfileId = pro.Id.ToString();
+                    Profile2.ProfileName = pro.FullName;
+                    Profile2.RequesterProfileId = profile.RequesterProfileId;
+                    Profile2.RequesterUserId = profile.RequesterUserId; 
+                    var Profile = await _userService.GetProfileByIdAsync(profile.RequesterProfileId);
+                    if (Profile != null)
+                    {
+                        Profile2.RequesterName = Profile.FullName;
+                        Profile2.RequesterEmail = Profile.Email;
+                    }
+                   
+                    var photos = await _userService.GetProfilePhotoAsync(profile.RequesterProfileId);
+                    if (photos != null)
+                    {
+                        Profile2.RequesterPhotoUrl = photos.PhotoUrl;
+                    }
+
+                    requestedProfiles.Add(Profile2);
+                }
+
             }
 
-            var profilesRequested = await _userService.GetAllRequestedProfileAsync(profile.ProfileId);
-            var profilesResponed = await _userService.GetAllResponsedProfileAsync(profile.ProfileId);
+
             return Ok(new
             {
-                RequestedByYou = profilesRequested,
-                RequestedForYou= profilesResponed
+                RequestedByYou = expectedProfiles,
+                RequestedForYou= requestedProfiles
             });
         }
 
@@ -1164,10 +1217,6 @@ namespace IWeddySupport.Controller
         public string UserId { get; set; }
         public string PhotoUrl { get; set; }
     }
-    public class GetProfiles
-    {
-        public string ProfileId { get; set; }
-    }
     public class SearchKeyViewModel
     {
         public string SkinTon { get; set; }
@@ -1191,8 +1240,28 @@ namespace IWeddySupport.Controller
 
     }
 
-
-
-  
+    public class RequestedForYouDataModel
+    {
+        public string ProfileId { get; set; }
+        public string ProfileName { get; set; } 
+        public string RequesterProfileId { get; set;} 
+        public string RequesterName { get; set; }
+        public string RequesterEmail {  get; set; } 
+        public string RequesterPhotoUrl {  get; set; }  
+        public string RequesterUserId {  get; set; }    
+    }
+    public class RequestedByYouDataModel
+    {
+        public string ProfileId { get; set; }
+        public string ProfileName { get; set; }
+        public string ExpecterProfileId { get; set; }
+        public string ExpecterName { get; set; }
+        public string ExpecterEmail { get; set; }
+        public string ExpecterPhotoUrl { get; set; }
+        public string ExpecterUserId { get; set; }
+        public string RequestAccepted { get; set; }
+        public string RequestRejected { get; set; }
+        public string Message {  get; set; }    
+    }
 
 }
