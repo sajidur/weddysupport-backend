@@ -380,9 +380,9 @@ namespace IWeddySupport.Controller
             var data = new
             {
                 profile = profile,
-                photo = photos.FilePath,
+                photo = photos?.FilePath??null,
                 address = address,
-                userRelationship = userRelationship.Relationship,
+                userRelationship = userRelationship?.Relationship??null,
 
             };
             return Ok(data);
