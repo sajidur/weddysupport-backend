@@ -33,7 +33,7 @@
         public string FamilyEconomicsCondition { get; set; } // "পরিবারের আর্থিক অবস্থা"
        // public string FamilyEconomicsDetails { get; set; } // "পরিবারের আর্থিক অবস্থা বিস্তারিত"
         public string FamilyReligiousEnvironment { get; set; } // "পরিবারের ধর্মীয় পরিবেশ"
-   
+        public string? FCMToken { get; set; }    
     }
 
 

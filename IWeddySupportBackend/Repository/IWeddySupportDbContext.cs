@@ -18,6 +18,7 @@ namespace IWeddySupport.Repository
         {
             _configuration = configuration;
         }
+        public DbSet<UserDevice> UserDevices { get; set; }
         public DbSet<Profile> Profiles { get; set; }
         public DbSet<UserProfile> UserProfiles { get; set; }
         public DbSet<Address> Addresses { get; set; }

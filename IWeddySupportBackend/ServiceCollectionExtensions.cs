@@ -19,6 +19,7 @@ namespace IWeddySupport
             services.AddScoped<IProfileRepository, ProfileRepository>();
             services.AddScoped<IUserProfileRepository, UserProfileRepository>();
             services.AddScoped<IUserRequestReository, UserRequestReository>();
+            services.AddScoped<IUserDeviceRepository, UserDeviceRepository>();
             // Add other service registrations here
             services.AddScoped<IUserService, UserService>();
 

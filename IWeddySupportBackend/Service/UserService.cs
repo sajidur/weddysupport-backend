@@ -13,6 +13,11 @@ namespace IWeddySupport.Service
 {
     public interface IUserService
     {
+        Task<Profile> GetProfileByUserIdAsync(string userId);
+        Task<UserDevice> GetUserDeviceByUserIdAsync(string userId); 
+        Task<UserDevice> CreateUserDeviceAsync(UserDevice userDevice);  
+        Task<UserDevice> UpdateUserDeviceAsync(UserDevice userDevice);  
+        
         Task<string> SavePhotoAsync(IFormFile file, string uploadPath);
         Task<IEnumerable<Profile>> GetAllProfilesAsync(string userId);
         Task<Profile?> GetProfileByIdAsync(string id);
@@ -21,13 +26,13 @@ namespace IWeddySupport.Service
         Task<Profile> DeleteProfileAsync(string id);
         Task<IEnumerable<Address>> GetAllAddressesAsync(string userId);
         Task<Address> CreateAddressAsync(Address address);
-        Task<Address> GetAddressAsync(string id);   
+        Task<Address> GetAddressAsync(string id);
         Task<Address> UpdateAddressAsync(Address address);
         Task<Address> DeleteAddressAsync(string id);
-        Task<ProfilePhoto> GetProfilePhotoAsync(string id); 
-        Task<ProfilePhoto> CreateProfilePhotoAsync( ProfilePhoto profilePhoto); 
-        Task<ProfilePhoto> UpdateProfilePhotoAsync( ProfilePhoto profilePhoto); 
-        Task<ProfilePhoto> DeleteProfilePhotoAsync( string id);
+        Task<ProfilePhoto> GetProfilePhotoAsync(string id);
+        Task<ProfilePhoto> CreateProfilePhotoAsync(ProfilePhoto profilePhoto);
+        Task<ProfilePhoto> UpdateProfilePhotoAsync(ProfilePhoto profilePhoto);
+        Task<ProfilePhoto> DeleteProfilePhotoAsync(string id);
         Task<IEnumerable<ProfilePhoto>> GetAllProfilePhotoAsync(string userId);
         Task<IEnumerable<UserProfile>> GetAllUserProfilesAsync(string userId);
         Task<UserProfile> GetUserProfileAsync(string userId);
@@ -39,7 +44,7 @@ namespace IWeddySupport.Service
         Task<PartnerExpectation> CreateExpectedPartnerAsync(PartnerExpectation expectedPartner);
         Task<PartnerExpectation> UpdateExpectedPartnerAsync(PartnerExpectation expectedPartner);
         Task<PartnerExpectation> DeleteExpectedPartnerAsync(string Id);
-        Task<IEnumerable<Profile>> GetExpectedPartnersByKeyAsync(SearchKeyViewModel key,string userId);
+        Task<IEnumerable<Profile>> GetExpectedPartnersByKeyAsync(SearchKeyViewModel key, string userId);
         Task<IEnumerable<Profile>> GetAllProfilesAsyncByDefault();
         Task<IEnumerable<UserProfile>> GetAllUserProfilesByDefault();
         Task<IEnumerable<ProfilePhoto>> GetAllProfilePhotosAsyncByDefault();
@@ -69,24 +74,55 @@ namespace IWeddySupport.Service
         private readonly IUserProfileRepository _userProfileRepository;
         private readonly IPartnerExpectationRepository _expectedPartnerRepository;
         private readonly IUserRequestReository _userRequestReository;
-        public UserService(IPartnerExpectationRepository expectedPartnerRepository, IUserProfileRepository userProfileRepository,IProfileRepository profileRepository, 
-            IAddressRepository addressRepository,IProfilePhotoRepository profilePhotoRepository,IUserRequestReository userRequest)
+        private readonly IUserDeviceRepository _userDeviceRepository;
+        public UserService(IPartnerExpectationRepository expectedPartnerRepository, IUserProfileRepository userProfileRepository, IProfileRepository profileRepository,
+            IAddressRepository addressRepository, IProfilePhotoRepository profilePhotoRepository, IUserRequestReository userRequest, IUserDeviceRepository userDeviceRepository )
         {
             _profileRepository = profileRepository;
             _addressRepository = addressRepository;
             _profilePhotoRepository = profilePhotoRepository;
             _userProfileRepository = userProfileRepository;
-            _expectedPartnerRepository = expectedPartnerRepository; 
+            _expectedPartnerRepository = expectedPartnerRepository;
             _userRequestReository = userRequest;
+            _userDeviceRepository = userDeviceRepository;
         }
-        public async Task<List<UserRequest>> GetAllRequestedProfileAsyncByMe(string id)
+        public async Task<UserDevice> GetUserDeviceByUserIdAsync(string userId)
         {
-            var profiles=await _userRequestReository.FindAsync(a=>a.RequesterProfileId == id);
-            if(profiles==null)
+            var devices = await _userDeviceRepository.FindAsync(a => a.UserId == userId);
+            if (devices.Any())
+            {
+                return devices.FirstOrDefault();
+            }
+            return null;
+        }
+        public async Task<UserDevice> CreateUserDeviceAsync(UserDevice userDevice)
+        {
+            await _userDeviceRepository.AddAsync(userDevice);
+            return userDevice;
+        }
+        public async Task<UserDevice> UpdateUserDeviceAsync(UserDevice userDevice)
+        {
+            await _userDeviceRepository.UpdateAsync(userDevice);
+            return userDevice;
+        }
+        public async Task<Profile> GetProfileByUserIdAsync(string userId)
+        {
+
+            var profiles = await _profileRepository.FindAsync(a => a.UserId == userId);
+            if (!profiles.Any())
             {
                 return null;
             }
-            return profiles.ToList();   
+            return profiles.FirstOrDefault();
+        }
+        public async Task<List<UserRequest>> GetAllRequestedProfileAsyncByMe(string id)
+        {
+            var profiles = await _userRequestReository.FindAsync(a => a.RequesterProfileId == id);
+            if (profiles == null)
+            {
+                return null;
+            }
+            return profiles.ToList();
         }
         public async Task<List<UserRequest>> GetAllRequestedProfileAsyncForMe(string id)
         {
@@ -99,7 +135,7 @@ namespace IWeddySupport.Service
         }
         public async Task<UserRequest> GetRequestedProfileAsync(string userId, string profileId)
         {
-            var profiles=await _userRequestReository.FindAsync(a=>a.RequesterProfileId==profileId&&a.RequesterUserId==userId);
+            var profiles = await _userRequestReository.FindAsync(a => a.RequesterProfileId == profileId && a.RequesterUserId == userId);
             return profiles.FirstOrDefault();
         }
         public async Task<UserRequest> GetResponserProfileAsync(string userId, string profileId)
@@ -109,8 +145,8 @@ namespace IWeddySupport.Service
         }
         public async Task<UserRequest> UpdatedUserRequestAsync(UserRequest us)
         {
-            await _userRequestReository.UpdateAsync(us);    
-            return us;  
+            await _userRequestReository.UpdateAsync(us);
+            return us;
         }
 
         public async Task<Address> GetAddressByProfileIdAsync(string userId, string profileId)
@@ -188,26 +224,26 @@ namespace IWeddySupport.Service
         }
         public async Task<UserRequest> GetUserRequestAsync(string userId, string profileId)
         {
-            var users = await _userRequestReository.FindAsync(a => a.RequesterProfileId == profileId&&a.RequesterUserId==userId);
+            var users = await _userRequestReository.FindAsync(a => a.RequesterProfileId == profileId && a.RequesterUserId == userId);
             if (users.Any())
             {
-               return users.FirstOrDefault();
-    
+                return users.FirstOrDefault();
+
             }
             return null;
         }
         public async Task<UserRequest> AddUserRequestAsync(UserRequest us)
         {
-           
-                us.Message = "First time user has requested";
-                await _userRequestReository.AddAsync(us);   
-            
+
+            us.Message = "First time user has requested";
+            await _userRequestReository.AddAsync(us);
+
             return us;
         }
 
         public async Task<IEnumerable<UserProfile>> GetAllUserProfilesByDefault()
         {
-            return await _userProfileRepository.GetAllAsync(); 
+            return await _userProfileRepository.GetAllAsync();
         }
 
         public async Task<IEnumerable<Profile>> GetAllProfilesAsyncByDefault()
@@ -217,21 +253,21 @@ namespace IWeddySupport.Service
 
         public async Task<IEnumerable<Profile>> GetAllProfilesAsync(string userId)
         {
-           return await _profileRepository.FindAsync(a=>a.UserId==userId);
+            return await _profileRepository.FindAsync(a => a.UserId == userId);
         }
 
         public async Task<Profile> GetProfileByIdAsync(string id)
         {
-   
-            var result= await _profileRepository.FindAsync(u=>u.Id==Guid.Parse(id));
+
+            var result = await _profileRepository.FindAsync(u => u.Id == Guid.Parse(id));
             return result.FirstOrDefault();
         }
 
         public async Task<Profile> CreateOrGetProfileAsync(Profile profile)
         {
 
-           
-            var profiles = await _profileRepository.FindAsync(a=>a.Email==profile.Email&&a.FullName==profile.FullName&&a.PhoneNumber==profile.PhoneNumber&&a.UserId==profile.UserId);
+
+            var profiles = await _profileRepository.FindAsync(a => a.Email == profile.Email && a.FullName == profile.FullName && a.PhoneNumber == profile.PhoneNumber && a.UserId == profile.UserId);
             if (!profiles.Any())
             {
                 var result = await _profileRepository.AddAsync(profile);
@@ -240,7 +276,7 @@ namespace IWeddySupport.Service
             return profiles.FirstOrDefault();
         }
 
-        public async Task<Profile> UpdateProfileAsync( Profile profile)
+        public async Task<Profile> UpdateProfileAsync(Profile profile)
         {
             await _profileRepository.UpdateAsync(profile);
             return profile;
@@ -248,30 +284,30 @@ namespace IWeddySupport.Service
 
         public async Task<Profile> DeleteProfileAsync(string id)
         {
-           
-            var profiles = await _profileRepository.FindAsync(u=>u.Id==Guid.Parse(id));
+
+            var profiles = await _profileRepository.FindAsync(u => u.Id == Guid.Parse(id));
             if (!profiles.Any())
             {
                 return null;
             }
-            var profile = profiles.FirstOrDefault();    
+            var profile = profiles.FirstOrDefault();
             await _profileRepository.RemoveAsync(profile);
             return profile;
         }
         public async Task<IEnumerable<Address>> GetAllAddressesAsync(string userId)
         {
-       
-            return await _addressRepository.FindAsync(a => a.UserId == userId); 
+
+            return await _addressRepository.FindAsync(a => a.UserId == userId);
 
         }
         public async Task<Address> CreateAddressAsync(Address address)
         {
-                 // Save the address to the database
-                var createdAddress = await _addressRepository.AddAsync(address);
-                // You can add additional business logic here if needed
-                return address;
-           
-         }
+            // Save the address to the database
+            var createdAddress = await _addressRepository.AddAsync(address);
+            // You can add additional business logic here if needed
+            return address;
+
+        }
         public async Task<Address> GetAddressAsync(string id)
         {
             var addresses = await _addressRepository.FindAsync(a => a.Id == Guid.Parse(id));
@@ -280,7 +316,7 @@ namespace IWeddySupport.Service
         public async Task<Address> UpdateAddressAsync(Address address)
         {
             await _addressRepository.UpdateAsync(address);
-           
+
             return address;
         }
         public async Task<Address> DeleteAddressAsync(string id)
@@ -383,7 +419,7 @@ namespace IWeddySupport.Service
         // Get a specific expected partner by Id
         public async Task<PartnerExpectation> GetExpectedPartnerAsync(string Id)
         {
-            var partners = await _expectedPartnerRepository.FindAsync(p => p.Id ==Guid.Parse(Id));
+            var partners = await _expectedPartnerRepository.FindAsync(p => p.Id == Guid.Parse(Id));
             return partners.FirstOrDefault();
         }
 
@@ -415,7 +451,7 @@ namespace IWeddySupport.Service
             return partnerToDelete;
         }
 
-        public async Task<IEnumerable<Profile>> GetExpectedPartnersByKeyAsync(SearchKeyViewModel key,string userId)
+        public async Task<IEnumerable<Profile>> GetExpectedPartnersByKeyAsync(SearchKeyViewModel key, string userId)
         {
             bool presentData = false, presentAddress = false;
             var currentDate = DateTime.Now;
@@ -423,12 +459,12 @@ namespace IWeddySupport.Service
             // Calculate acceptable date of birth range only if MinAge and MaxAge are not 0
             DateTime? maxDateOfBirth = key.MinAge > 0 ? currentDate.AddYears(-key.MinAge) : (DateTime?)null;
             DateTime? minDateOfBirth = key.MaxAge > 0 ? currentDate.AddYears(-key.MaxAge) : (DateTime?)null;
-            if (key.MinAge > 0 || key.MaxAge > 0|| !string.IsNullOrEmpty(key.SkinTon)|| !string.IsNullOrEmpty(key.BloodGroup)|| !string.IsNullOrEmpty(key.Occupation))
+            if (key.MinAge > 0 || key.MaxAge > 0 || !string.IsNullOrEmpty(key.SkinTon) || !string.IsNullOrEmpty(key.BloodGroup) || !string.IsNullOrEmpty(key.Occupation))
             {
-                presentData = true; 
+                presentData = true;
             }
-            if (!string.IsNullOrEmpty(key.Religious)||!string.IsNullOrEmpty(key.MaritalStatus)||!string.IsNullOrEmpty(key.MotherOccupation)||!string.IsNullOrEmpty(key.FatherOccupation)) { presentData = true; }
-            if (!string.IsNullOrEmpty(key.Gender)|| key.MinYearlySalary>0||key.MaxYearlySalary>0|| key.MinHeight>0||key.MaxHeight>0) {  presentData = true; }  
+            if (!string.IsNullOrEmpty(key.Religious) || !string.IsNullOrEmpty(key.MaritalStatus) || !string.IsNullOrEmpty(key.MotherOccupation) || !string.IsNullOrEmpty(key.FatherOccupation)) { presentData = true; }
+            if (!string.IsNullOrEmpty(key.Gender) || key.MinYearlySalary > 0 || key.MaxYearlySalary > 0 || key.MinHeight > 0 || key.MaxHeight > 0) { presentData = true; }
             // Query profiles based on key criteria
             var profiles = await _profileRepository.FindAsync(p =>
                 ((string.IsNullOrEmpty(key.SkinTon) || (p.SkinTone != null && p.SkinTone.ToLower().Contains(key.SkinTon.ToLower()))) &&
@@ -441,32 +477,32 @@ namespace IWeddySupport.Service
                 (string.IsNullOrEmpty(key.Gender) || (p.Gender != null && p.Gender.ToLower().Contains(key.Gender.ToLower()))) &&
                 (!maxDateOfBirth.HasValue || (p.DateOfBirth != null && p.DateOfBirth <= maxDateOfBirth)) &&
                 (!minDateOfBirth.HasValue || (p.DateOfBirth != null && p.DateOfBirth >= minDateOfBirth)) &&
-                (key.MinYearlySalary<=0||key.MinYearlySalary>0&& p.YearlySalary >= key.MinYearlySalary) &&
-                (key.MaxYearlySalary<=0||key.MaxYearlySalary>0&& p.YearlySalary <= key.MaxYearlySalary) &&
-                (key.MinHeight<=0||key.MinHeight>0&& p.Height >= key.MinHeight) &&
-                (key.MaxHeight<=0||key.MaxHeight>0 &&p.Height <= key.MaxHeight) &&
-                (p.CanReciteQuranProperly == key.CanReciteQuranProperly))&&(p.UserId!=userId)
+                (key.MinYearlySalary <= 0 || key.MinYearlySalary > 0 && p.YearlySalary >= key.MinYearlySalary) &&
+                (key.MaxYearlySalary <= 0 || key.MaxYearlySalary > 0 && p.YearlySalary <= key.MaxYearlySalary) &&
+                (key.MinHeight <= 0 || key.MinHeight > 0 && p.Height >= key.MinHeight) &&
+                (key.MaxHeight <= 0 || key.MaxHeight > 0 && p.Height <= key.MaxHeight) &&
+                (p.CanReciteQuranProperly == key.CanReciteQuranProperly)) && (p.UserId != userId)
             );
 
-            if (!string.IsNullOrEmpty(key.LocalAddress) || !string.IsNullOrEmpty(key.Thana)|| !string.IsNullOrEmpty(key.District)|| !string.IsNullOrEmpty(key.LocalAddress)|| !string.IsNullOrEmpty(key.Thana)|| !string.IsNullOrEmpty(key.District))
+            if (!string.IsNullOrEmpty(key.LocalAddress) || !string.IsNullOrEmpty(key.Thana) || !string.IsNullOrEmpty(key.District) || !string.IsNullOrEmpty(key.LocalAddress) || !string.IsNullOrEmpty(key.Thana) || !string.IsNullOrEmpty(key.District))
             {
                 presentAddress = true;
             }
 
 
-              //Query addresses based on address criteria
-           var newProfiles = new List<Profile>();
+            //Query addresses based on address criteria
+            var newProfiles = new List<Profile>();
             if (presentAddress)
             {
                 var addressResults = await _addressRepository.FindAsync(a =>
-                    ((string.IsNullOrEmpty(key.LocalAddress) || (!string.IsNullOrEmpty(key.LocalAddress) && a.CurrentAddress.localAddress != null && a.CurrentAddress.localAddress.ToLower().Contains(key.LocalAddress.ToLower()))&&
-                    (string.IsNullOrEmpty(key.Thana) || !string.IsNullOrEmpty(key.Thana) && a.CurrentAddress.Thana != null && a.CurrentAddress.Thana.ToLower().Contains(key.Thana.ToLower()))&&
-                    (string.IsNullOrEmpty(key.District) || !string.IsNullOrEmpty(key.District) && a.CurrentAddress.District != null && a.CurrentAddress.District.ToLower().Contains(key.District.ToLower())))||
-                    (string.IsNullOrEmpty(key.LocalAddress) || (!string.IsNullOrEmpty(key.LocalAddress) && a.PermanentAddress.localAddress != null && a.PermanentAddress.localAddress.ToLower().Contains(key.LocalAddress.ToLower()))&&
+                    ((string.IsNullOrEmpty(key.LocalAddress) || (!string.IsNullOrEmpty(key.LocalAddress) && a.CurrentAddress.localAddress != null && a.CurrentAddress.localAddress.ToLower().Contains(key.LocalAddress.ToLower())) &&
+                    (string.IsNullOrEmpty(key.Thana) || !string.IsNullOrEmpty(key.Thana) && a.CurrentAddress.Thana != null && a.CurrentAddress.Thana.ToLower().Contains(key.Thana.ToLower())) &&
+                    (string.IsNullOrEmpty(key.District) || !string.IsNullOrEmpty(key.District) && a.CurrentAddress.District != null && a.CurrentAddress.District.ToLower().Contains(key.District.ToLower()))) ||
+                    (string.IsNullOrEmpty(key.LocalAddress) || (!string.IsNullOrEmpty(key.LocalAddress) && a.PermanentAddress.localAddress != null && a.PermanentAddress.localAddress.ToLower().Contains(key.LocalAddress.ToLower())) &&
                     (string.IsNullOrEmpty(key.Thana) || !string.IsNullOrEmpty(key.Thana) && a.PermanentAddress.Thana != null && a.PermanentAddress.Thana.ToLower().Contains(key.Thana.ToLower())) &&
                     (string.IsNullOrEmpty(key.District) || !string.IsNullOrEmpty(key.District) && a.PermanentAddress.District != null &&
                     a.PermanentAddress.District.ToLower().Contains(key.District.ToLower()))))
-                    &&(a.UserId!=userId));
+                    && (a.UserId != userId));
 
                 if (addressResults.Any())
                 {
@@ -491,7 +527,7 @@ namespace IWeddySupport.Service
             {
                 return newProfiles;
             }
-            return profiles?.ToList()?? new List<Profile>();
+            return profiles?.ToList() ?? new List<Profile>();
         }
 
         public async Task<string> SavePhotoAsync(IFormFile file, string uploadPath)

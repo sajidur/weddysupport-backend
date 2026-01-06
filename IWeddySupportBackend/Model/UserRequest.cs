@@ -10,5 +10,6 @@
         public string? UserRequestRejected { get; set; }
         public string ApplicationStatus {  get; set; }  
         public string? Message { get; set; } = string.Empty;
+
     }
 }

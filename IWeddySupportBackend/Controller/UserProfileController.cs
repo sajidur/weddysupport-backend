@@ -107,13 +107,13 @@ namespace IWeddySupport.Controller
             var userId = user.FindFirst("Id")?.Value;
             var email = user.FindFirst("Email")?.Value;
             var myProfiles = await _userService.GetAllProfilesAsync(userId);//take all of my created profile.
-            var requestedProfiles=new List<RequestedForYouDataModel>();
+            var requestedProfiles = new List<RequestedForYouDataModel>();
             var Profile2 = new RequestedForYouDataModel();
             var expectedProfiles = new List<RequestedByYouDataModel>();
             var Profile1 = new RequestedByYouDataModel();
             foreach (var pro in myProfiles)
             {
-                if (pro== null) continue;
+                if (pro == null) continue;
                 var profilesRequestedByMe = await _userService.GetAllRequestedProfileAsyncByMe(pro.Id.ToString());//whom i requested by me
                 var profilesRequestedForMe = await _userService.GetAllRequestedProfileAsyncForMe(pro.Id.ToString());//whose are requested for me.
                 foreach (var profile in profilesRequestedByMe)
@@ -136,7 +136,7 @@ namespace IWeddySupport.Controller
                     {
                         Profile1.ExpecterPhotoUrl = photos.PhotoUrl;
                     }
-                   // Profile1.ExpecterUserId = expacterProfile.UserId;
+                    // Profile1.ExpecterUserId = expacterProfile.UserId;
                     expectedProfiles.Add(Profile1);
                 }
                 foreach (var profile in profilesRequestedForMe)
@@ -145,14 +145,14 @@ namespace IWeddySupport.Controller
                     Profile2.ProfileId = pro.Id.ToString();
                     Profile2.ProfileName = pro.FullName;
                     Profile2.RequesterProfileId = profile.RequesterProfileId;
-                    Profile2.RequesterUserId = profile.RequesterUserId; 
+                    Profile2.RequesterUserId = profile.RequesterUserId;
                     var Profile = await _userService.GetProfileByIdAsync(profile.RequesterProfileId);
                     if (Profile != null)
                     {
                         Profile2.RequesterName = Profile.FullName;
                         Profile2.RequesterEmail = Profile.Email;
                     }
-                   
+
                     var photos = await _userService.GetProfilePhotoAsync(profile.RequesterProfileId);
                     if (photos != null)
                     {
@@ -168,7 +168,7 @@ namespace IWeddySupport.Controller
             return Ok(new
             {
                 RequestedByYou = expectedProfiles,
-                RequestedForYou= requestedProfiles
+                RequestedForYou = requestedProfiles
             });
         }
 
@@ -187,7 +187,7 @@ namespace IWeddySupport.Controller
             var user = HttpContext.User;
             // Optionally retrieve user ID if needed
             var userId = user.FindFirst("Id")?.Value;
-            var existedRequester=await _userService.GetProfileByIdAsync(usR.RequesterProfileId);
+            var existedRequester = await _userService.GetProfileByIdAsync(usR.RequesterProfileId);
             if (existedRequester == null)
             {
                 return BadRequest(new
@@ -206,11 +206,11 @@ namespace IWeddySupport.Controller
                     errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage))
                 });
             }
-            var existedUserRequest = await _userService.GetUserRequestAsync(userId,usR.RequesterProfileId);
+            var existedUserRequest = await _userService.GetUserRequestAsync(userId, usR.RequesterProfileId);
             if (existedUserRequest != null)
             {
                 existedUserRequest.UpdatedDate = DateTime.Now;
-                existedUserRequest.ApplicationStatus=usR.ApplicationStatus;
+                existedUserRequest.ApplicationStatus = usR.ApplicationStatus;
                 if (existedUserRequest.UserRequestAccepted == "yes")
                 {
                     // us.UserRequestRejected = "no";
@@ -225,24 +225,24 @@ namespace IWeddySupport.Controller
                 {
                     existedUserRequest.Message = "Already sent this request but has no response yet!";
                 }
-               await _userService.UpdatedUserRequestAsync(existedUserRequest);
-              
-                if (existedUserRequest.UserRequestAccepted == "yes")
-                    {
-                        var profileData = await GetProfileById(existedUserRequest.ExpacterProfileId);
+                await _userService.UpdatedUserRequestAsync(existedUserRequest);
 
-                        return Ok(new
-                        {
-                            Request = existedUserRequest,
-                            ProfileData = profileData
-                        });
-                    }
+                if (existedUserRequest.UserRequestAccepted == "yes")
+                {
+                    var profileData = await GetProfileById(existedUserRequest.ExpacterProfileId);
+
                     return Ok(new
                     {
-                        message = "UserRequest data is sent again successfully",
-                        UserRequest = existedUserRequest
+                        Request = existedUserRequest,
+                        ProfileData = profileData
                     });
-                
+                }
+                return Ok(new
+                {
+                    message = "UserRequest data is sent again successfully",
+                    UserRequest = existedUserRequest
+                });
+
             }
             var usr = new UserRequest
             {
@@ -254,9 +254,9 @@ namespace IWeddySupport.Controller
                 ExpacterUserId = usR.ExpacterUserId,
                 UserRequestAccepted = null,
                 UserRequestRejected = null,
-                ApplicationStatus=usR.ApplicationStatus
+                ApplicationStatus = usR.ApplicationStatus
             };
-            
+
             var ussR = await _userService.AddUserRequestAsync(usr);
 
             return Ok(new
@@ -265,8 +265,9 @@ namespace IWeddySupport.Controller
                 UserRequest = ussR
             });
 
-          
+
         }
+
         [HttpPost("acceptOrReject")]
         public async Task<IActionResult> profileAcceptOrReject(ProfileAcceptOrReject res)
         {
@@ -315,7 +316,7 @@ namespace IWeddySupport.Controller
             //if (res.RequestAccepted == "yes")
             //{
             //    var profileData = await GetProfileById(res.MyProfileId);
-               
+
             //    return Ok(new
             //    {
             //        Request = updatedRequest,
@@ -326,6 +327,7 @@ namespace IWeddySupport.Controller
             return Ok(new { Request = updatedRequest });
 
         }
+
         [HttpPost("getResponse")]
         public async Task<IActionResult> GetResponseFromUser(ProfileResponse res)
         {
@@ -380,9 +382,9 @@ namespace IWeddySupport.Controller
             var data = new
             {
                 profile = profile,
-                photo = photos?.FilePath??null,
+                photo = photos?.FilePath ?? null,
                 address = address,
-                userRelationship = userRelationship?.Relationship??null,
+                userRelationship = userRelationship?.Relationship ?? null,
 
             };
             return Ok(data);
@@ -443,6 +445,7 @@ namespace IWeddySupport.Controller
                     FamilyDetails = profile.FamilyDetails,
                     FamilyEconomicsCondition = profile.FamilyEconomicsCondition,
                     FamilyReligiousEnvironment = profile.FamilyReligiousEnvironment
+
                 };
 
                 // Create the profile using the service
@@ -462,7 +465,75 @@ namespace IWeddySupport.Controller
             }
         }
 
+        [HttpPost("addOrUpdateDeviceToken")]
+        public async Task<IActionResult> AddOrUpdateDeviceToken([FromBody] UserDeviceViewModel userDeviceViewModel)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(new
+                {
+                    message = "Invalid device data.",
+                    errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage))
+                });
+            }
 
+            try
+            {
+                // Retrieve user from context
+                var user = HttpContext.User;
+                // Optionally retrieve user ID if needed
+                var userId = user.FindFirst("Id")?.Value;
+                var profile = await _userService.GetProfileByUserIdAsync(userId);
+                if (profile == null)
+                {
+                    return BadRequest(new
+                    {
+                        message = "No such profile has existed for this user",
+                        errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage))
+                    });
+                }
+                var existedDevice = await _userService.GetUserDeviceByUserIdAsync(userId);
+                if (existedDevice != null)
+                {
+                    existedDevice.UpdatedDate = DateTime.Now;
+                    existedDevice.DeviceType = userDeviceViewModel.DeviceType;
+                    existedDevice.FCMToken = userDeviceViewModel.FCMToken;
+                    existedDevice.DeviceId = userDeviceViewModel.DeviceId;
+                    existedDevice.ProfileId = profile.Id.ToString();
+                    var updatedDevice = await _userService.UpdateUserDeviceAsync(existedDevice);
+                    return Ok(updatedDevice);
+                }
+                //var email = user.FindFirst("Email")?.Value;
+                var userDevice = new UserDevice
+                {
+                    Id = Guid.NewGuid(),
+                    CreatedDate = DateTime.Now,
+                    UserId = userId,
+                    FCMToken = userDeviceViewModel.FCMToken,
+                    DeviceType = userDeviceViewModel.DeviceType,
+                    ProfileId = profile.Id.ToString(),
+                    CreatedBy = DateTime.Now,
+                    DeviceId = userDeviceViewModel.DeviceId,
+                    IsActive = true,
+                    IsDeleted = false,
+                    UpdatedDate = DateTime.Now,
+                    UpdatedBy = DateTime.Now,
+
+
+                };
+                var result = await _userService.CreateUserDeviceAsync(userDevice);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                // Handle unexpected errors
+                return StatusCode(500, new
+                {
+                    message = "An error occurred while saving the device token.",
+                    error = ex.Message
+                });
+            }
+        }
         [HttpPut("updateProfile")]
         public async Task<IActionResult> UpdateProfile([FromBody] ProfileUpdateViewModel profile)
         {
@@ -564,7 +635,7 @@ namespace IWeddySupport.Controller
         public async Task<IActionResult> CreateAddress([FromBody] AddressViewModel addressViewModel)
         {
             // Validate the incoming model
-            if(!ModelState.IsValid)
+            if (!ModelState.IsValid)
             {
                 return BadRequest(new
                 {
@@ -577,7 +648,7 @@ namespace IWeddySupport.Controller
             // Optionally retrieve user ID if needed
             var userId = user.FindFirst("Id")?.Value;
             var email = user.FindFirst("Email")?.Value;
-            var existingAddress=await _userService.GetAddressByProfileIdAsync(userId, addressViewModel.ProfileId);
+            var existingAddress = await _userService.GetAddressByProfileIdAsync(userId, addressViewModel.ProfileId);
             if (existingAddress != null)
             {
                 return Ok(new
@@ -639,7 +710,8 @@ namespace IWeddySupport.Controller
                 });
             }
             var existedAddress = await _userService.GetAddressAsync(addressViewModel.Id);
-            if (existedAddress == null) {
+            if (existedAddress == null)
+            {
                 return BadRequest(new
                 {
                     message = "No such address existed!.",
@@ -707,8 +779,8 @@ namespace IWeddySupport.Controller
             var user = HttpContext.User;
             // Optionally retrieve user ID if needed
             var userId = user.FindFirst("Id")?.Value;
-            var existedPhoto = await _userService.GetProfilePhotoByIdAsync(userId,profileId);
-            if(existedPhoto!=null)
+            var existedPhoto = await _userService.GetProfilePhotoByIdAsync(userId, profileId);
+            if (existedPhoto != null)
             {
                 return Ok(new
                 {
@@ -936,7 +1008,7 @@ namespace IWeddySupport.Controller
             // Optionally retrieve user ID if needed
             var userId = user.FindFirst("Id")?.Value;
             var email = user.FindFirst("Email")?.Value;
-            var existedUserProfile=await _userService.GetUserProfileByProfileIdAsync(userId, userProfileViewModel.ProfileId);
+            var existedUserProfile = await _userService.GetUserProfileByProfileIdAsync(userId, userProfileViewModel.ProfileId);
             if (existedUserProfile != null)
             {
                 return Ok(new
@@ -1057,7 +1129,7 @@ namespace IWeddySupport.Controller
             // Optionally retrieve user ID if needed
             var userId = user.FindFirst("Id")?.Value;
             var email = user.FindFirst("Email")?.Value;
-            var partners = await _userService.GetExpectedPartnersByKeyAsync(keyViewModel,userId);
+            var partners = await _userService.GetExpectedPartnersByKeyAsync(keyViewModel, userId);
             if (partners == null)
             {
                 return NotFound("Partner preferences not found for the given UserId.");
@@ -1083,10 +1155,10 @@ namespace IWeddySupport.Controller
             // Optionally retrieve user ID if needed
             var userId = user.FindFirst("Id")?.Value;
             var email = user.FindFirst("Email")?.Value;
-            var existedPartner=await _userService.GetExpectedPartnerByProfileIdAsync(userId,expectedPartnerViewModel.ProfileId);
+            var existedPartner = await _userService.GetExpectedPartnerByProfileIdAsync(userId, expectedPartnerViewModel.ProfileId);
             if (existedPartner != null)
             {
-                return Ok (new
+                return Ok(new
                 {
                     message = "Already existed partner data.",
                     ExpectedPartner = existedPartner
@@ -1231,24 +1303,24 @@ namespace IWeddySupport.Controller
         public int MaxAge { get; set; }
         public int MinHeight { get; set; }
         public int MaxHeight { get; set; }
-        public int MinYearlySalary {  get; set; }  
+        public int MinYearlySalary { get; set; }
         public int MaxYearlySalary { get; set; }
-        public string LocalAddress {  get; set; }   
-        public string Thana { get; set; }   
-        public string District {  get; set; } 
-        public bool CanReciteQuranProperly {  get; set; }   
+        public string LocalAddress { get; set; }
+        public string Thana { get; set; }
+        public string District { get; set; }
+        public bool CanReciteQuranProperly { get; set; }
 
     }
 
     public class RequestedForYouDataModel
     {
         public string ProfileId { get; set; }
-        public string ProfileName { get; set; } 
-        public string RequesterProfileId { get; set;} 
+        public string ProfileName { get; set; }
+        public string RequesterProfileId { get; set; }
         public string RequesterName { get; set; }
-        public string RequesterEmail {  get; set; } 
-        public string RequesterPhotoUrl {  get; set; }  
-        public string RequesterUserId {  get; set; }    
+        public string RequesterEmail { get; set; }
+        public string RequesterPhotoUrl { get; set; }
+        public string RequesterUserId { get; set; }
     }
     public class RequestedByYouDataModel
     {
@@ -1261,7 +1333,7 @@ namespace IWeddySupport.Controller
         public string ExpecterUserId { get; set; }
         public string RequestAccepted { get; set; }
         public string RequestRejected { get; set; }
-        public string Message {  get; set; }    
+        public string Message { get; set; }
     }
 
 }

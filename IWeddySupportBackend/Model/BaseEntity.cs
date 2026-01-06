@@ -25,4 +25,6 @@ namespace IWeddySupport.Model
             CreatedDate = DateTime.Now;
         }
     }
+
+
 }

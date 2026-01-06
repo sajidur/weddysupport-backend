@@ -22,7 +22,7 @@ namespace IWeddySupport.Model
         public int Height { get; set; }
         public string Weight { get; set; }
         public string BloodGroup { get; set; }
-      // public string ClothingPreferenceOutside { get; set; } // "ঘরের বাহিরে সাধারণত কি ধরণের পোষাক পরেন?"
+        // public string ClothingPreferenceOutside { get; set; } // "ঘরের বাহিরে সাধারণত কি ধরণের পোষাক পরেন?"
         public string PrayerHabit { get; set; } // "প্রতিদিন পাঁচ ওয়াক্ত নামাজ পড়েন কি? কবে থেকে পড়ছেন?"
         public bool CanReciteQuranProperly { get; set; } // "শুদ্ধভাবে কুরআন তিলওয়াত করতে পারেন?"
         public bool HasMentalOrPhysicalIllness { get; set; } // "আপনার মানসিক বা শারীরিক কোনো রোগ আছে?"
@@ -36,7 +36,7 @@ namespace IWeddySupport.Model
         public int NumberOfSisters { get; set; } // "বোনের সংখ্যা"
         public string FamilyDetails { get; set; }
         public string FamilyEconomicsCondition { get; set; } // "পরিবারের আর্থিক অবস্থা"
-       // public string FamilyEconomicsDetails { get; set; } // "পরিবারের আর্থিক অবস্থা বিস্তারিত"
+                                                             // public string FamilyEconomicsDetails { get; set; } // "পরিবারের আর্থিক অবস্থা বিস্তারিত"
         public string FamilyReligiousEnvironment { get; set; } // "পরিবারের ধর্মীয় পরিবেশ"
         public string UserId { get; set; }
     }
