@@ -14,10 +14,10 @@ namespace IWeddySupport.Service
     public interface IUserService
     {
         Task<Profile> GetProfileByUserIdAsync(string userId);
-        Task<UserDevice> GetUserDeviceByUserIdAsync(string userId); 
-        Task<UserDevice> CreateUserDeviceAsync(UserDevice userDevice);  
-        Task<UserDevice> UpdateUserDeviceAsync(UserDevice userDevice);  
-        
+        Task<UserDevice> GetUserDeviceByUserIdAsync(string userId);
+        Task<UserDevice> CreateUserDeviceAsync(UserDevice userDevice);
+        Task<UserDevice> UpdateUserDeviceAsync(UserDevice userDevice);
+
         Task<string> SavePhotoAsync(IFormFile file, string uploadPath);
         Task<IEnumerable<Profile>> GetAllProfilesAsync(string userId);
         Task<Profile?> GetProfileByIdAsync(string id);
@@ -76,7 +76,7 @@ namespace IWeddySupport.Service
         private readonly IUserRequestReository _userRequestReository;
         private readonly IUserDeviceRepository _userDeviceRepository;
         public UserService(IPartnerExpectationRepository expectedPartnerRepository, IUserProfileRepository userProfileRepository, IProfileRepository profileRepository,
-            IAddressRepository addressRepository, IProfilePhotoRepository profilePhotoRepository, IUserRequestReository userRequest, IUserDeviceRepository userDeviceRepository )
+            IAddressRepository addressRepository, IProfilePhotoRepository profilePhotoRepository, IUserRequestReository userRequest, IUserDeviceRepository userDeviceRepository)
         {
             _profileRepository = profileRepository;
             _addressRepository = addressRepository;
@@ -291,6 +291,11 @@ namespace IWeddySupport.Service
                 return null;
             }
             var profile = profiles.FirstOrDefault();
+            var devicetoken = await _userDeviceRepository.FindAsync(a => a.ProfileId == profile.Id.ToString() && a.UserId == profile.UserId);
+            if (devicetoken != null)
+            {
+                await _userDeviceRepository.RemoveAsync(devicetoken.FirstOrDefault());
+            }
             await _profileRepository.RemoveAsync(profile);
             return profile;
         }

@@ -7,6 +7,7 @@
         public string RequesterUserId { get; set; }
         public string RequestAccepted { get; set; }
         public string RequestRejected { get; set; }
+        
     }
     public class ProfileResponse
     {

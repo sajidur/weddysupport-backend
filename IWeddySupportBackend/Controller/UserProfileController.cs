@@ -18,11 +18,15 @@ namespace IWeddySupport.Controller
     {
         private readonly IUserService _userService;
         private readonly IProfilePhotoRepository _profilePhotoRepository;
+        private readonly IFirebaseNotificationService _notificationService;
 
-        public UserProfileController(IUserService userService, IProfilePhotoRepository profilePhotoRepository)
+
+        public UserProfileController(IUserService userService, IFirebaseNotificationService notificationService,
+            IProfilePhotoRepository profilePhotoRepository)
         {
             _userService = userService;
             _profilePhotoRepository = profilePhotoRepository;
+            _notificationService = notificationService;
         }
         [HttpGet("GetAllData")]
         public async Task<IActionResult> GetAllData()
@@ -207,6 +211,7 @@ namespace IWeddySupport.Controller
                 });
             }
             var existedUserRequest = await _userService.GetUserRequestAsync(userId, usR.RequesterProfileId);
+            var accepterUserDevice = await _userService.GetUserDeviceByUserIdAsync(usR.ExpacterUserId);
             if (existedUserRequest != null)
             {
                 existedUserRequest.UpdatedDate = DateTime.Now;
@@ -226,6 +231,17 @@ namespace IWeddySupport.Controller
                     existedUserRequest.Message = "Already sent this request but has no response yet!";
                 }
                 await _userService.UpdatedUserRequestAsync(existedUserRequest);
+                // 🔔 Push Notification
+                await _notificationService.SendAsync(
+                    accepterUserDevice?.FCMToken,
+                    usR.Title,
+                    usR.Body,
+                    new Dictionary<string, string>
+                    {
+        { "type", "PROFILE_REQUEST" },
+        { "requestUserId", userId},
+        { "requesterProfileId", usR.RequesterProfileId.ToString() }
+                    });
 
                 if (existedUserRequest.UserRequestAccepted == "yes")
                 {
@@ -233,6 +249,7 @@ namespace IWeddySupport.Controller
 
                     return Ok(new
                     {
+                        DeviceToken = accepterUserDevice?.FCMToken,
                         Request = existedUserRequest,
                         ProfileData = profileData
                     });
@@ -258,9 +275,20 @@ namespace IWeddySupport.Controller
             };
 
             var ussR = await _userService.AddUserRequestAsync(usr);
-
+            // 🔔 Push Notification
+            await _notificationService.SendAsync(
+                accepterUserDevice?.FCMToken,
+                usR.Title,//title
+                usR.Body,//body
+                new Dictionary<string, string>
+                {
+        { "type", "PROFILE_REQUEST" },
+        { "requestUserId", userId },
+        { "requesterProfileId", usR.RequesterProfileId.ToString() }
+                });
             return Ok(new
             {
+                DeviceToken = accepterUserDevice?.FCMToken,
                 message = "UserRequest data is sent successfully.",
                 UserRequest = ussR
             });
@@ -298,6 +326,35 @@ namespace IWeddySupport.Controller
             if (res.RequestAccepted == "yes")
             {
                 HasAnyRequest.Message = "Accepted the request!";
+                // 🔔 SEND NOTIFICATION ONLY IF ACCEPTED
+                if (res.RequestAccepted == "yes")
+                {
+                    // Get accepter profile (to show name)
+                    var accepterProfile = await _userService
+                        .GetProfileByIdAsync(HasAnyRequest.ExpacterProfileId);
+
+                    string accepterName = accepterProfile?.FullName ?? "the user";
+
+                    // Get requester device
+                    var requesterDevice = await _userService
+                        .GetUserDeviceByUserIdAsync(HasAnyRequest.RequesterUserId);
+
+                    if (!string.IsNullOrWhiteSpace(requesterDevice?.FCMToken))
+                    {
+                        await _notificationService.SendAsync(
+                            requesterDevice.FCMToken,
+                            "Profile Request Accepted",
+                            $"Your request has been accepted by {accepterName}.",
+                            new Dictionary<string, string>
+                            {
+                    { "type", "PROFILE_REQUEST_ACCEPTED" },
+                                        { "requestUserId", HasAnyRequest.RequesterUserId },
+
+                    { "requestProfileId", HasAnyRequest.RequesterProfileId }
+
+                            });
+                    }
+                }
             }
             else if (res.RequestRejected == "yes")
             {
@@ -311,7 +368,7 @@ namespace IWeddySupport.Controller
 
             }
             var updatedRequest = await _userService.UpdatedUserRequestAsync(HasAnyRequest);
-
+            var accpterUserDevice = await _userService.GetUserDeviceByUserIdAsync(HasAnyRequest.ExpacterUserId);
             //// Prepare additional data if accepted
             //if (res.RequestAccepted == "yes")
             //{
@@ -324,7 +381,11 @@ namespace IWeddySupport.Controller
             //    });
             //}
 
-            return Ok(new { Request = updatedRequest });
+            return Ok(new
+            {
+                DeviceToken = accpterUserDevice?.FCMToken,
+                Request = updatedRequest
+            });
 
         }
 

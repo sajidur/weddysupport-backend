@@ -22,7 +22,7 @@ namespace IWeddySupport
             services.AddScoped<IUserDeviceRepository, UserDeviceRepository>();
             // Add other service registrations here
             services.AddScoped<IUserService, UserService>();
-
+            services.AddScoped<IFirebaseNotificationService, FirebaseNotificationService>();
 
             return services;
         }
