@@ -72,7 +72,7 @@ builder.Configuration.GetSection("Firebase").Bind(firebaseSettings);
 
 var credentialJson = new
 {
-    type = "service_account",
+    type = firebaseSettings.Type,
     project_id = firebaseSettings.ProjectId,
     private_key_id = firebaseSettings.PrivateKeyId,
     private_key = firebaseSettings.PrivateKey.Replace("\\n", "\n"),
