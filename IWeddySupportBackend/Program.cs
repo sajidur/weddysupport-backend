@@ -81,7 +81,8 @@ var credentialJson = new
     auth_uri = firebaseSettings.AuthUri,
     token_uri = firebaseSettings.TokenUri,
     auth_provider_x509_cert_url = firebaseSettings.AuthProviderX509CertUrl,
-    client_x509_cert_url = firebaseSettings.ClientX509CertUrl
+    client_x509_cert_url = firebaseSettings.ClientX509CertUrl,
+    universal_domain = firebaseSettings.UniverseDomain
 };
 
 FirebaseApp.Create(new AppOptions()

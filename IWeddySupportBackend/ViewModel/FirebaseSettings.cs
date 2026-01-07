@@ -12,6 +12,7 @@
         public string TokenUri { get; set; }
         public string AuthProviderX509CertUrl { get; set; }
         public string ClientX509CertUrl { get; set; }
+        public string UniverseDomain { get; set; }  
     }
 
 }
