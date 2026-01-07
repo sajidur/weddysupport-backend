@@ -614,32 +614,51 @@ namespace IWeddySupport.Controller
                 }
 
                 // Map the data from ProfileUpdateViewModel to the existing Profile entity
-                existingProfile.BloodGroup = profile.BloodGroup;
-                existingProfile.CanReciteQuranProperly = profile.CanReciteQuranProperly;
+                existingProfile.isPublic = profile.isPublic;
+
+                existingProfile.FullName = profile.FullName;
+                existingProfile.DateOfBirth = profile.DateOfBirth;
+                existingProfile.Gender = profile.Gender;
                 existingProfile.PhoneNumber = profile.PhoneNumber;
+                existingProfile.Email = profile.Email;
+
+                existingProfile.Nationality = profile.Nationality;
+                existingProfile.Religion = profile.Religion;
+
                 existingProfile.Occupation = profile.Occupation;
                 existingProfile.YearlySalary = profile.YearlySalary;
-                existingProfile.SkinTone = profile.SkinTone;
                 existingProfile.CompanyOrInstituteName = profile.CompanyOrInstituteName;
+
                 existingProfile.MaritalStatus = profile.MaritalStatus;
                 existingProfile.Declaration = profile.Declaration;
+
+                existingProfile.SkinTone = profile.SkinTone;
                 existingProfile.Height = profile.Height;
                 existingProfile.Weight = profile.Weight;
+                existingProfile.BloodGroup = profile.BloodGroup;
+
                 existingProfile.PrayerHabit = profile.PrayerHabit;
+                existingProfile.CanReciteQuranProperly = profile.CanReciteQuranProperly;
                 existingProfile.HasMentalOrPhysicalIllness = profile.HasMentalOrPhysicalIllness;
+
                 existingProfile.IsFatherAlive = profile.IsFatherAlive;
                 existingProfile.FatherOccupationDetails = profile.FatherOccupationDetails;
+
                 existingProfile.IsMotherAlive = profile.IsMotherAlive;
                 existingProfile.MotherOccupationDetails = profile.MotherOccupationDetails;
+
                 existingProfile.NumberOfBrothers = profile.NumberOfBrothers;
                 existingProfile.NumberOfSisters = profile.NumberOfSisters;
+
                 existingProfile.FamilyDetails = profile.FamilyDetails;
                 existingProfile.FamilyEconomicsCondition = profile.FamilyEconomicsCondition;
                 existingProfile.FamilyReligiousEnvironment = profile.FamilyReligiousEnvironment;
-                existingProfile.isPublic = profile.isPublic;
-                existingProfile.UpdatedDate = DateTime.Now;
-                // Update the profile using the service
+
+                existingProfile.UpdatedDate = DateTime.UtcNow;
+
+                // Update the profile
                 var updatedProfile = await _userService.UpdateProfileAsync(existingProfile);
+
 
                 return Ok(updatedProfile);
             }
