@@ -13,8 +13,8 @@ namespace IWeddySupport.Service
 {
     public interface IUserService
     {
-        Task<Profile> GetProfileByUserIdAsync(string userId);
-        Task<UserDevice> GetUserDeviceByUserIdAsync(string userId);
+        Task<Profile> GetProfileByUserIdAsync(string userId, string profileId);
+        Task<UserDevice> GetUserDeviceByUserIdAsync(string userId,string ProfileId);
         Task<UserDevice> CreateUserDeviceAsync(UserDevice userDevice);
         Task<UserDevice> UpdateUserDeviceAsync(UserDevice userDevice);
 
@@ -86,9 +86,9 @@ namespace IWeddySupport.Service
             _userRequestReository = userRequest;
             _userDeviceRepository = userDeviceRepository;
         }
-        public async Task<UserDevice> GetUserDeviceByUserIdAsync(string userId)
+        public async Task<UserDevice> GetUserDeviceByUserIdAsync(string userId, string profileId)
         {
-            var devices = await _userDeviceRepository.FindAsync(a => a.UserId == userId);
+            var devices = await _userDeviceRepository.FindAsync(a => a.UserId == userId&&profileId==a.ProfileId);
             if (devices.Any())
             {
                 return devices.FirstOrDefault();
@@ -105,10 +105,10 @@ namespace IWeddySupport.Service
             await _userDeviceRepository.UpdateAsync(userDevice);
             return userDevice;
         }
-        public async Task<Profile> GetProfileByUserIdAsync(string userId)
+        public async Task<Profile> GetProfileByUserIdAsync(string userId, string profileId)
         {
 
-            var profiles = await _profileRepository.FindAsync(a => a.UserId == userId);
+            var profiles = await _profileRepository.FindAsync(a => a.UserId == userId && a.Id.ToString() == profileId);
             if (!profiles.Any())
             {
                 return null;

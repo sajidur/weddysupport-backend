@@ -211,7 +211,7 @@ namespace IWeddySupport.Controller
                 });
             }
             var existedUserRequest = await _userService.GetUserRequestAsync(userId, usR.RequesterProfileId);
-            var accepterUserDevice = await _userService.GetUserDeviceByUserIdAsync(usR.ExpacterUserId);
+            var accepterUserDevice = await _userService.GetUserDeviceByUserIdAsync(usR.ExpacterUserId,usR.ExpacterProfileId);
             if (existedUserRequest != null)
             {
                 existedUserRequest.UpdatedDate = DateTime.Now;
@@ -337,7 +337,7 @@ namespace IWeddySupport.Controller
 
                     // Get requester device
                     var requesterDevice = await _userService
-                        .GetUserDeviceByUserIdAsync(HasAnyRequest.RequesterUserId);
+                        .GetUserDeviceByUserIdAsync(HasAnyRequest.RequesterUserId,HasAnyRequest.RequesterProfileId);
 
                     if (!string.IsNullOrWhiteSpace(requesterDevice?.FCMToken))
                     {
@@ -368,7 +368,7 @@ namespace IWeddySupport.Controller
 
             }
             var updatedRequest = await _userService.UpdatedUserRequestAsync(HasAnyRequest);
-            var accpterUserDevice = await _userService.GetUserDeviceByUserIdAsync(HasAnyRequest.ExpacterUserId);
+            var accpterUserDevice = await _userService.GetUserDeviceByUserIdAsync(HasAnyRequest.ExpacterUserId,HasAnyRequest.ExpacterProfileId);
             //// Prepare additional data if accepted
             //if (res.RequestAccepted == "yes")
             //{
@@ -544,7 +544,7 @@ namespace IWeddySupport.Controller
                 var user = HttpContext.User;
                 // Optionally retrieve user ID if needed
                 var userId = user.FindFirst("Id")?.Value;
-                var profile = await _userService.GetProfileByUserIdAsync(userId);
+                var profile = await _userService.GetProfileByUserIdAsync(userId,userDeviceViewModel.ProfileId);
                 if (profile == null)
                 {
                     return BadRequest(new
@@ -553,7 +553,7 @@ namespace IWeddySupport.Controller
                         errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage))
                     });
                 }
-                var existedDevice = await _userService.GetUserDeviceByUserIdAsync(userId);
+                var existedDevice = await _userService.GetUserDeviceByUserIdAsync(userId, userDeviceViewModel.ProfileId);
                 if (existedDevice != null)
                 {
                     existedDevice.UpdatedDate = DateTime.Now;
