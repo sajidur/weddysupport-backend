@@ -2,7 +2,10 @@
 # This .gitignore file is customized to ignore unnecessary Visual Studio 
 # and .NET-related files, while retaining essential project files.
 ################################################################################
-
+# Ignore all secrets and Firebase credentials
+IWeddySupportBackend/secrets/
+**/secrets/
+*.json
 # Ignore Visual Studio-specific files
 .vscode/
 .vs/
