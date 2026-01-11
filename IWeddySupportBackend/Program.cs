@@ -66,29 +66,6 @@ app.UseSwaggerUI(c =>
     c.SwaggerEndpoint("/swagger/v1/swagger.json", "My API V1");
 });
 
-// Firebase initialization
-//var firebaseSettings = new FirebaseSettings();
-//builder.Configuration.GetSection("Firebase").Bind(firebaseSettings);
-
-//var credentialJson = new
-//{
-//    type = firebaseSettings.Type,
-//    project_id = firebaseSettings.ProjectId,
-//    private_key_id = firebaseSettings.PrivateKeyId,
-//    private_key = firebaseSettings.PrivateKey.Replace("\\n", "\n"),
-//    client_email = firebaseSettings.ClientEmail,
-//    client_id = firebaseSettings.ClientId,
-//    auth_uri = firebaseSettings.AuthUri,
-//    token_uri = firebaseSettings.TokenUri,
-//    auth_provider_x509_cert_url = firebaseSettings.AuthProviderX509CertUrl,
-//    client_x509_cert_url = firebaseSettings.ClientX509CertUrl,
-//    universal_domain = firebaseSettings.UniverseDomain
-//};
-
-//FirebaseApp.Create(new AppOptions()
-//{
-//    Credential = GoogleCredential.FromJson(System.Text.Json.JsonSerializer.Serialize(credentialJson))
-//});
 if (FirebaseApp.DefaultInstance == null)
 {
     FirebaseApp.Create(new AppOptions
