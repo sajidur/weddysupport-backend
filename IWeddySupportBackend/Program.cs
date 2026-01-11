@@ -3,13 +3,10 @@ using FirebaseAdmin;
 using Google.Apis.Auth.OAuth2;
 using IWeddySupport;
 using IWeddySupport.Repository;
-using IWeddySupport.ViewModel;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Hosting.Server;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
-using System.Configuration;
 using System.Text;
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddCors(options =>
@@ -66,15 +63,41 @@ app.UseSwaggerUI(c =>
     c.SwaggerEndpoint("/swagger/v1/swagger.json", "My API V1");
 });
 
+var env = builder.Environment;
+
+// Absolute path (works in IIS + local)
+var firebasePath = Path.Combine(
+    env.ContentRootPath,
+    "secrets",
+    "firebase-service-account.json"
+);
+
+if (!File.Exists(firebasePath))
+{
+    throw new FileNotFoundException($"Firebase credential file not found: {firebasePath}");
+}
+
 if (FirebaseApp.DefaultInstance == null)
 {
     FirebaseApp.Create(new AppOptions
     {
-        Credential = GoogleCredential.GetApplicationDefault()
+        Credential = GoogleCredential.FromFile(firebasePath)
     });
 }
-var credPath = Environment.GetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS");
-Console.WriteLine($"Firebase Credential Path: {credPath}");
+
+Console.WriteLine($"Firebase initialized using: {firebasePath}");
+
+
+
+//if (FirebaseApp.DefaultInstance == null)
+//{
+//    FirebaseApp.Create(new AppOptions
+//    {
+//        Credential = GoogleCredential.GetApplicationDefault()
+//    });
+//}
+//var credPath = Environment.GetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS");
+//Console.WriteLine($"Firebase Credential Path: {credPath}");
 
 
 
