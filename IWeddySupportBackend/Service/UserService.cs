@@ -14,7 +14,7 @@ namespace IWeddySupport.Service
     public interface IUserService
     {
         Task<Profile> GetProfileByUserIdAsync(string userId, string profileId);
-        Task<UserDevice> GetUserDeviceByUserIdAsync(string userId,string ProfileId);
+        Task<UserDevice> GetUserDeviceByUserIdAsync(string userId, string ProfileId);
         Task<UserDevice> CreateUserDeviceAsync(UserDevice userDevice);
         Task<UserDevice> UpdateUserDeviceAsync(UserDevice userDevice);
 
@@ -88,7 +88,7 @@ namespace IWeddySupport.Service
         }
         public async Task<UserDevice> GetUserDeviceByUserIdAsync(string userId, string profileId)
         {
-            var devices = await _userDeviceRepository.FindAsync(a => a.UserId == userId&&profileId==a.ProfileId);
+            var devices = await _userDeviceRepository.FindAsync(a => a.UserId == userId && profileId == a.ProfileId);
             if (devices.Any())
             {
                 return devices.FirstOrDefault();
@@ -456,84 +456,148 @@ namespace IWeddySupport.Service
             return partnerToDelete;
         }
 
-        public async Task<IEnumerable<Profile>> GetExpectedPartnersByKeyAsync(SearchKeyViewModel key, string userId)
+        public async Task<IEnumerable<Profile>> GetExpectedPartnersByKeyAsync(
+    SearchKeyViewModel key,
+    string userId)
         {
-            bool presentData = false, presentAddress = false;
             var currentDate = DateTime.Now;
 
-            // Calculate acceptable date of birth range only if MinAge and MaxAge are not 0
-            DateTime? maxDateOfBirth = key.MinAge > 0 ? currentDate.AddYears(-key.MinAge) : (DateTime?)null;
-            DateTime? minDateOfBirth = key.MaxAge > 0 ? currentDate.AddYears(-key.MaxAge) : (DateTime?)null;
-            if (key.MinAge > 0 || key.MaxAge > 0 || !string.IsNullOrEmpty(key.SkinTon) || !string.IsNullOrEmpty(key.BloodGroup) || !string.IsNullOrEmpty(key.Occupation))
-            {
-                presentData = true;
-            }
-            if (!string.IsNullOrEmpty(key.Religious) || !string.IsNullOrEmpty(key.MaritalStatus) || !string.IsNullOrEmpty(key.MotherOccupation) || !string.IsNullOrEmpty(key.FatherOccupation)) { presentData = true; }
-            if (!string.IsNullOrEmpty(key.Gender) || key.MinYearlySalary > 0 || key.MaxYearlySalary > 0 || key.MinHeight > 0 || key.MaxHeight > 0) { presentData = true; }
-            // Query profiles based on key criteria
+            DateTime? maxDateOfBirth = key.MinAge > 0
+                ? currentDate.AddYears(-key.MinAge.Value)
+                : null;
+
+            DateTime? minDateOfBirth = key.MaxAge > 0
+                ? currentDate.AddYears(-key.MaxAge.Value)
+                : null;
+
+            bool hasAddressFilter =
+                !string.IsNullOrEmpty(key.LocalAddress) ||
+                !string.IsNullOrEmpty(key.Thana) ||
+                !string.IsNullOrEmpty(key.District);
+
+            // ==========================
+            // MAIN PROFILE SEARCH
+            // ==========================
             var profiles = await _profileRepository.FindAsync(p =>
-                ((string.IsNullOrEmpty(key.SkinTon) || (p.SkinTone != null && p.SkinTone.ToLower().Contains(key.SkinTon.ToLower()))) &&
-                (string.IsNullOrEmpty(key.BloodGroup) || (p.BloodGroup != null && p.BloodGroup.ToLower().Contains(key.BloodGroup.ToLower()))) &&
-                (string.IsNullOrEmpty(key.Occupation) || (p.Occupation != null && p.Occupation.ToLower().Contains(key.Occupation.ToLower()))) &&
-                (string.IsNullOrEmpty(key.Religious) || (p.Religion != null && p.Religion.ToLower().Contains(key.Religious.ToLower()))) &&
-                (string.IsNullOrEmpty(key.MaritalStatus) || (p.MaritalStatus != null && p.MaritalStatus.ToLower().Contains(key.MaritalStatus.ToLower()))) &&
-                (string.IsNullOrEmpty(key.MotherOccupation) || (p.MotherOccupationDetails != null && p.MotherOccupationDetails.ToLower().Contains(key.MotherOccupation.ToLower()))) &&
-                (string.IsNullOrEmpty(key.FatherOccupation) || (p.FatherOccupationDetails != null && p.FatherOccupationDetails.ToLower().Contains(key.FatherOccupation.ToLower()))) &&
-                (string.IsNullOrEmpty(key.Gender) || (p.Gender != null && p.Gender.ToLower().Contains(key.Gender.ToLower()))) &&
-                (!maxDateOfBirth.HasValue || (p.DateOfBirth != null && p.DateOfBirth <= maxDateOfBirth)) &&
-                (!minDateOfBirth.HasValue || (p.DateOfBirth != null && p.DateOfBirth >= minDateOfBirth)) &&
-                (key.MinYearlySalary <= 0 || key.MinYearlySalary > 0 && p.YearlySalary >= key.MinYearlySalary) &&
-                (key.MaxYearlySalary <= 0 || key.MaxYearlySalary > 0 && p.YearlySalary <= key.MaxYearlySalary) &&
-                (key.MinHeight <= 0 || key.MinHeight > 0 && p.Height >= key.MinHeight) &&
-                (key.MaxHeight <= 0 || key.MaxHeight > 0 && p.Height <= key.MaxHeight) &&
-                (p.CanReciteQuranProperly == key.CanReciteQuranProperly)) && (p.UserId != userId)
+                p.UserId != userId &&
+
+                // 🔴 PRIMARY FILTERS (ALWAYS)
+                (string.IsNullOrEmpty(key.MaritalStatus) ||
+                    p.MaritalStatus != null &&
+                    p.MaritalStatus == key.MaritalStatus) &&
+
+                (string.IsNullOrEmpty(key.Gender) ||
+                    p.Gender != null &&
+                    p.Gender == key.Gender) &&
+
+                (string.IsNullOrEmpty(key.Occupation) ||
+                    p.Occupation != null &&
+                    p.Occupation.Contains(key.Occupation, StringComparison.OrdinalIgnoreCase)) &&
+
+                // 🟢 OPTIONAL STRING FILTERS
+                (string.IsNullOrEmpty(key.SkinTon) ||
+                    p.SkinTone != null &&
+                    p.SkinTone.Contains(key.SkinTon, StringComparison.OrdinalIgnoreCase)) &&
+
+                (string.IsNullOrEmpty(key.BloodGroup) ||
+                    p.BloodGroup != null &&
+                    p.BloodGroup.Contains(key.BloodGroup, StringComparison.OrdinalIgnoreCase)) &&
+
+                (string.IsNullOrEmpty(key.Religious) ||
+                    p.Religion != null &&
+                    p.Religion.Contains(key.Religious, StringComparison.OrdinalIgnoreCase)) &&
+
+                (string.IsNullOrEmpty(key.MotherOccupation) ||
+                    p.MotherOccupationDetails != null &&
+                    p.MotherOccupationDetails.Contains(key.MotherOccupation, StringComparison.OrdinalIgnoreCase)) &&
+
+                (string.IsNullOrEmpty(key.FatherOccupation) ||
+                    p.FatherOccupationDetails != null &&
+                    p.FatherOccupationDetails.Contains(key.FatherOccupation, StringComparison.OrdinalIgnoreCase)) &&
+
+                // 🟢 AGE FILTER
+                (!maxDateOfBirth.HasValue ||
+                    p.DateOfBirth != null &&
+                    p.DateOfBirth <= maxDateOfBirth) &&
+
+                (!minDateOfBirth.HasValue ||
+                    p.DateOfBirth != null &&
+                    p.DateOfBirth >= minDateOfBirth) &&
+
+                // 🟢 NUMERIC FILTERS
+                (key.MinYearlySalary <= 0 ||
+                    p.YearlySalary >= key.MinYearlySalary) &&
+
+                (key.MaxYearlySalary <= 0 ||
+                    p.YearlySalary <= key.MaxYearlySalary) &&
+
+                (key.MinHeight <= 0 ||
+                    p.Height >= key.MinHeight) &&
+
+                (key.MaxHeight <= 0 ||
+                    p.Height <= key.MaxHeight) &&
+
+                // 🟢 BOOLEAN FILTER
+                (key.CanReciteQuranProperly == null ||
+                  key.CanReciteQuranProperly != null && p.CanReciteQuranProperly == key.CanReciteQuranProperly)
             );
 
-            if (!string.IsNullOrEmpty(key.LocalAddress) || !string.IsNullOrEmpty(key.Thana) || !string.IsNullOrEmpty(key.District) || !string.IsNullOrEmpty(key.LocalAddress) || !string.IsNullOrEmpty(key.Thana) || !string.IsNullOrEmpty(key.District))
-            {
-                presentAddress = true;
-            }
+            // ==========================
+            // ADDRESS FILTER
+            // ==========================
+            if (!hasAddressFilter)
+                return profiles.ToList();
 
+            var addressResults = await _addressRepository.FindAsync(a =>
+                a.UserId != userId && (
 
-            //Query addresses based on address criteria
-            var newProfiles = new List<Profile>();
-            if (presentAddress)
-            {
-                var addressResults = await _addressRepository.FindAsync(a =>
-                    ((string.IsNullOrEmpty(key.LocalAddress) || (!string.IsNullOrEmpty(key.LocalAddress) && a.CurrentAddress.localAddress != null && a.CurrentAddress.localAddress.ToLower().Contains(key.LocalAddress.ToLower())) &&
-                    (string.IsNullOrEmpty(key.Thana) || !string.IsNullOrEmpty(key.Thana) && a.CurrentAddress.Thana != null && a.CurrentAddress.Thana.ToLower().Contains(key.Thana.ToLower())) &&
-                    (string.IsNullOrEmpty(key.District) || !string.IsNullOrEmpty(key.District) && a.CurrentAddress.District != null && a.CurrentAddress.District.ToLower().Contains(key.District.ToLower()))) ||
-                    (string.IsNullOrEmpty(key.LocalAddress) || (!string.IsNullOrEmpty(key.LocalAddress) && a.PermanentAddress.localAddress != null && a.PermanentAddress.localAddress.ToLower().Contains(key.LocalAddress.ToLower())) &&
-                    (string.IsNullOrEmpty(key.Thana) || !string.IsNullOrEmpty(key.Thana) && a.PermanentAddress.Thana != null && a.PermanentAddress.Thana.ToLower().Contains(key.Thana.ToLower())) &&
-                    (string.IsNullOrEmpty(key.District) || !string.IsNullOrEmpty(key.District) && a.PermanentAddress.District != null &&
-                    a.PermanentAddress.District.ToLower().Contains(key.District.ToLower()))))
-                    && (a.UserId != userId));
+                    // Current Address
+                    (
+                        (string.IsNullOrEmpty(key.LocalAddress) ||
+                            a.CurrentAddress.localAddress != null &&
+                            a.CurrentAddress.localAddress.Contains(key.LocalAddress, StringComparison.OrdinalIgnoreCase)) &&
 
-                if (addressResults.Any())
-                {
-                    var profileIds = addressResults
-                        .Where(a => a.ProfileId != null)
-                        .Select(a => a.ProfileId)
-                        .Distinct()
-                        .ToList();
+                        (string.IsNullOrEmpty(key.Thana) ||
+                            a.CurrentAddress.Thana != null &&
+                            a.CurrentAddress.Thana.Contains(key.Thana, StringComparison.OrdinalIgnoreCase)) &&
 
-                    var addressProfiles = await _profileRepository.FindAsync(p => profileIds.Contains(p.Id.ToString()));
-                    if (addressProfiles != null)
-                    {
-                        newProfiles = addressProfiles.ToList();
-                    }
-                }
-            }
-            if (presentData && presentAddress)
-            {
-                return profiles.Intersect(newProfiles).ToList();
-            }
-            if (presentAddress)
-            {
-                return newProfiles;
-            }
-            return profiles?.ToList() ?? new List<Profile>();
+                        (string.IsNullOrEmpty(key.District) ||
+                            a.CurrentAddress.District != null &&
+                            a.CurrentAddress.District.Contains(key.District, StringComparison.OrdinalIgnoreCase))
+                    )
+                    ||
+                    // Permanent Address
+                    (
+                        (string.IsNullOrEmpty(key.LocalAddress) ||
+                            a.PermanentAddress.localAddress != null &&
+                            a.PermanentAddress.localAddress.Contains(key.LocalAddress, StringComparison.OrdinalIgnoreCase)) &&
+
+                        (string.IsNullOrEmpty(key.Thana) ||
+                            a.PermanentAddress.Thana != null &&
+                            a.PermanentAddress.Thana.Contains(key.Thana, StringComparison.OrdinalIgnoreCase)) &&
+
+                        (string.IsNullOrEmpty(key.District) ||
+                            a.PermanentAddress.District != null &&
+                            a.PermanentAddress.District.Contains(key.District, StringComparison.OrdinalIgnoreCase))
+                    )
+                )
+            );
+
+            if (!addressResults.Any())
+                return Enumerable.Empty<Profile>();
+
+            var profileIds = addressResults
+                .Where(a => a.ProfileId != null)
+                .Select(a => a.ProfileId!)
+                .Distinct()
+                .ToList();
+
+            var addressProfiles = await _profileRepository
+                .FindAsync(p => profileIds.Contains(p.Id.ToString()));
+
+            return profiles.Intersect(addressProfiles).ToList();
         }
+
 
         public async Task<string> SavePhotoAsync(IFormFile file, string uploadPath)
         {

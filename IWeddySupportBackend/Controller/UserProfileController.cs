@@ -211,7 +211,7 @@ namespace IWeddySupport.Controller
                 });
             }
             var existedUserRequest = await _userService.GetUserRequestAsync(userId, usR.RequesterProfileId);
-            var accepterUserDevice = await _userService.GetUserDeviceByUserIdAsync(usR.ExpacterUserId,usR.ExpacterProfileId);
+            var accepterUserDevice = await _userService.GetUserDeviceByUserIdAsync(usR.ExpacterUserId, usR.ExpacterProfileId);
             if (existedUserRequest != null)
             {
                 existedUserRequest.UpdatedDate = DateTime.Now;
@@ -337,7 +337,7 @@ namespace IWeddySupport.Controller
 
                     // Get requester device
                     var requesterDevice = await _userService
-                        .GetUserDeviceByUserIdAsync(HasAnyRequest.RequesterUserId,HasAnyRequest.RequesterProfileId);
+                        .GetUserDeviceByUserIdAsync(HasAnyRequest.RequesterUserId, HasAnyRequest.RequesterProfileId);
 
                     if (!string.IsNullOrWhiteSpace(requesterDevice?.FCMToken))
                     {
@@ -368,7 +368,7 @@ namespace IWeddySupport.Controller
 
             }
             var updatedRequest = await _userService.UpdatedUserRequestAsync(HasAnyRequest);
-            var accpterUserDevice = await _userService.GetUserDeviceByUserIdAsync(HasAnyRequest.ExpacterUserId,HasAnyRequest.ExpacterProfileId);
+            var accpterUserDevice = await _userService.GetUserDeviceByUserIdAsync(HasAnyRequest.ExpacterUserId, HasAnyRequest.ExpacterProfileId);
             //// Prepare additional data if accepted
             //if (res.RequestAccepted == "yes")
             //{
@@ -544,7 +544,7 @@ namespace IWeddySupport.Controller
                 var user = HttpContext.User;
                 // Optionally retrieve user ID if needed
                 var userId = user.FindFirst("Id")?.Value;
-                var profile = await _userService.GetProfileByUserIdAsync(userId,userDeviceViewModel.ProfileId);
+                var profile = await _userService.GetProfileByUserIdAsync(userId, userDeviceViewModel.ProfileId);
                 if (profile == null)
                 {
                     return BadRequest(new
@@ -1371,24 +1371,24 @@ namespace IWeddySupport.Controller
     }
     public class SearchKeyViewModel
     {
-        public string SkinTon { get; set; }
-        public string BloodGroup { get; set; }
-        public string Occupation { get; set; }
-        public string Religious { get; set; }
+        public string? SkinTon { get; set; }
+        public string? BloodGroup { get; set; }
+        public string? Occupation { get; set; }
+        public string? Religious { get; set; }
         public string MaritalStatus { get; set; }
-        public string MotherOccupation { get; set; }
-        public string FatherOccupation { get; set; }
+        public string? MotherOccupation { get; set; }
+        public string? FatherOccupation { get; set; }
         public string Gender { get; set; }
-        public int MinAge { get; set; }
-        public int MaxAge { get; set; }
-        public int MinHeight { get; set; }
-        public int MaxHeight { get; set; }
-        public int MinYearlySalary { get; set; }
-        public int MaxYearlySalary { get; set; }
-        public string LocalAddress { get; set; }
-        public string Thana { get; set; }
-        public string District { get; set; }
-        public bool CanReciteQuranProperly { get; set; }
+        public int? MinAge { get; set; }
+        public int? MaxAge { get; set; }
+        public int? MinHeight { get; set; }
+        public int? MaxHeight { get; set; }
+        public int? MinYearlySalary { get; set; }
+        public int? MaxYearlySalary { get; set; }
+        public string? LocalAddress { get; set; }
+        public string? Thana { get; set; }
+        public string? District { get; set; }
+        public bool? CanReciteQuranProperly { get; set; }
 
     }
 
