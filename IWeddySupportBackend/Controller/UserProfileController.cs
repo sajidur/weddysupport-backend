@@ -156,7 +156,9 @@ namespace IWeddySupport.Controller
                         Profile2.RequesterName = Profile.FullName;
                         Profile2.RequesterEmail = Profile.Email;
                     }
-
+                    Profile2.UserRequestRejected = profile.UserRequestRejected;
+                    Profile2.UserRequestAccepted = profile.UserRequestAccepted;
+                    Profile2.Message = profile.Message;
                     var photos = await _userService.GetProfilePhotoAsync(profile.RequesterProfileId);
                     if (photos != null)
                     {
@@ -1401,6 +1403,10 @@ namespace IWeddySupport.Controller
         public string RequesterEmail { get; set; }
         public string RequesterPhotoUrl { get; set; }
         public string RequesterUserId { get; set; }
+        public string? UserRequestAccepted { get; set; }
+        public string? UserRequestRejected { get; set; }
+        public string ApplicationStatus { get; set; }
+        public string? Message { get; set; } = string.Empty;
     }
     public class RequestedByYouDataModel
     {
