@@ -17,7 +17,7 @@ namespace IWeddySupport.Service
         Task<UserDevice> GetUserDeviceByUserIdAsync(string userId, string ProfileId);
         Task<UserDevice> CreateUserDeviceAsync(UserDevice userDevice);
         Task<UserDevice> UpdateUserDeviceAsync(UserDevice userDevice);
-
+        Task<UserRequest> DeleteUserRequest(UserRequest userRequest);
         Task<string> SavePhotoAsync(IFormFile file, string uploadPath);
         Task<IEnumerable<Profile>> GetAllProfilesAsync(string userId);
         Task<Profile?> GetProfileByIdAsync(string id);
@@ -39,6 +39,7 @@ namespace IWeddySupport.Service
         Task<UserProfile> CreateUserProfileAsync(UserProfile userProfile);
         Task<UserProfile> UpdateUserProfileAsync(UserProfile userProfile);
         Task<UserProfile> DeleteUserProfileAsync(string userId);
+        Task<UserRequest> GetExpecterProfileRequest(string userId, string expecterProfileId);
         Task<IEnumerable<PartnerExpectation>> GetAllExpectedPartnersAsync(string userId);
         Task<PartnerExpectation> GetExpectedPartnerAsync(string Id);
         Task<PartnerExpectation> CreateExpectedPartnerAsync(PartnerExpectation expectedPartner);
@@ -85,6 +86,20 @@ namespace IWeddySupport.Service
             _expectedPartnerRepository = expectedPartnerRepository;
             _userRequestReository = userRequest;
             _userDeviceRepository = userDeviceRepository;
+        }
+        public async Task<UserRequest> GetExpecterProfileRequest(string userId, string expecterProfileId)
+        {
+            var requests = await _userRequestReository.FindAsync(a => a.RequesterUserId == userId && a.ExpacterProfileId == expecterProfileId);
+            if (requests.Any())
+            {
+                return requests.FirstOrDefault();
+            }
+            return null;
+        }
+        public async Task<UserRequest> DeleteUserRequest(UserRequest userRequest)
+        {
+            await _userRequestReository.RemoveAsync(userRequest);
+            return userRequest;
         }
         public async Task<UserDevice> GetUserDeviceByUserIdAsync(string userId, string profileId)
         {

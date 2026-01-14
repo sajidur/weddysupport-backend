@@ -366,11 +366,18 @@ namespace IWeddySupport.Controller
             else
             {
                 HasAnyRequest.Message = "No response!";
-
-
+            }
+            if (res.RequestAccepted == "yes")
+            {
+                HasAnyRequest.UserRequestRejected = "no";
             }
             var updatedRequest = await _userService.UpdatedUserRequestAsync(HasAnyRequest);
-            var accpterUserDevice = await _userService.GetUserDeviceByUserIdAsync(HasAnyRequest.ExpacterUserId, HasAnyRequest.ExpacterProfileId);
+
+            if (res.RequestRejected == "yes")
+            {
+                HasAnyRequest.UserRequestAccepted = "no";
+                await _userService.DeleteUserRequest(HasAnyRequest);
+            }
             //// Prepare additional data if accepted
             //if (res.RequestAccepted == "yes")
             //{
@@ -385,7 +392,7 @@ namespace IWeddySupport.Controller
 
             return Ok(new
             {
-                DeviceToken = accpterUserDevice?.FCMToken,
+                 
                 Request = updatedRequest
             });
 
@@ -672,6 +679,32 @@ namespace IWeddySupport.Controller
             {
                 // Generic exception handling
                 return StatusCode(500, new { message = "An error occurred while updating the profile.", error = ex.Message });
+            }
+        }
+        [HttpDelete("deleteUserRequest")]
+        public async Task<IActionResult> deleteUserRequest(string expecterProfileId)
+        {
+            if (string.IsNullOrWhiteSpace(expecterProfileId))
+            {
+                return BadRequest("Profile ID cannot be null or empty.");
+            }
+            try
+            {
+                var user = HttpContext.User;
+                // Optionally retrieve user ID if needed
+                var userId = user.FindFirst("Id")?.Value;
+                var existedRequest = await _userService.GetExpecterProfileRequest(userId, expecterProfileId);
+                var isDeleted = await _userService.DeleteUserRequest(existedRequest);
+                if (isDeleted == null)
+                {
+                    return StatusCode(500, "Failed to delete the user request.");
+                }
+
+                return Ok("Deleted data successfully!");
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ex.Message);
             }
         }
 
