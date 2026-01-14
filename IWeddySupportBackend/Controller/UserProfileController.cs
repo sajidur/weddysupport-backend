@@ -252,7 +252,7 @@ namespace IWeddySupport.Controller
                     return Ok(new
                     {
                         DeviceToken = accepterUserDevice?.FCMToken,
-                        Request = existedUserRequest,
+                        UserRequest = existedUserRequest,
                         ProfileData = profileData
                     });
                 }
