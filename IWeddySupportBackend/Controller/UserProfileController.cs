@@ -122,6 +122,7 @@ namespace IWeddySupport.Controller
                 var profilesRequestedForMe = await _userService.GetAllRequestedProfileAsyncForMe(pro.Id.ToString());//whose are requested for me.
                 foreach (var profile in profilesRequestedByMe)
                 {
+                    Profile2 = new RequestedForYouDataModel();
                     Profile1.ProfileId = pro.Id.ToString();
                     Profile1.ProfileName = pro.FullName;
                     Profile1.RequestRejected = profile.UserRequestRejected;
@@ -145,6 +146,7 @@ namespace IWeddySupport.Controller
                 }
                 foreach (var profile in profilesRequestedForMe)
                 {
+                    Profile2 = new RequestedForYouDataModel();
                     if (profile == null) continue;
                     Profile2.ProfileId = pro.Id.ToString();
                     Profile2.ProfileName = pro.FullName;
