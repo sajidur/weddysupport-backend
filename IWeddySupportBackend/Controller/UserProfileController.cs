@@ -315,7 +315,7 @@ namespace IWeddySupport.Controller
             var user = HttpContext.User;
             // Optionally retrieve user ID if needed
             var userId = user.FindFirst("Id")?.Value;
-            var HasAnyRequest = await _userService.GetRequestedProfileAsync(res.RequesterUserId, res.RequesterProfileId);
+            var HasAnyRequest = await _userService.GetUserRequestAsync(res.RequesterUserId,res.RequesterProfileId,res.MyProfileId);
             if (HasAnyRequest == null)
             {
                 return Ok(null);
