@@ -214,7 +214,7 @@ namespace IWeddySupport.Controller
                     errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage))
                 });
             }
-            var existedUserRequest = await _userService.GetUserRequestAsync(userId, usR.RequesterProfileId);
+            var existedUserRequest = await _userService.GetUserRequestAsync(userId, usR.RequesterProfileId,usR.ExpacterProfileId);
             var accepterUserDevice = await _userService.GetUserDeviceByUserIdAsync(usR.ExpacterUserId, usR.ExpacterProfileId);
             if (existedUserRequest != null)
             {
