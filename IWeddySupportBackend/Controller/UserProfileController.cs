@@ -454,7 +454,7 @@ namespace IWeddySupport.Controller
             var data = new
             {
                 profile = profile,
-                photo = photos?.FilePath ?? null,
+                photo = photos?.PhotoUrl ?? null,
                 address = address,
                 userRelationship = userRelationship?.Relationship ?? null,
 
