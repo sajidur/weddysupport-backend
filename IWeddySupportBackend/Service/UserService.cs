@@ -13,6 +13,7 @@ namespace IWeddySupport.Service
 {
     public interface IUserService
     {
+        Task<IEnumerable<Profile>> GetAllExpectedProfileAsync(string userId);
         Task<Profile> GetProfileByUserIdAsync(string userId, string profileId);
         Task<UserDevice> GetUserDeviceByUserIdAsync(string userId, string ProfileId);
         Task<UserDevice> CreateUserDeviceAsync(UserDevice userDevice);
@@ -440,6 +441,22 @@ namespace IWeddySupport.Service
         {
             return await _expectedPartnerRepository.FindAsync(a => a.UserId == userId);
         }
+        public async Task<IEnumerable<Profile>> GetAllExpectedProfileAsync(string userId)
+        {
+            var users = await _userRequestReository.FindAsync(a =>
+                (a.ExpacterUserId == userId || a.RequesterUserId == userId) &&
+                a.UserRequestAccepted == "yes");
+
+            var profileIds = users
+                .Select(a => a.ExpacterUserId == userId
+                    ? a.RequesterProfileId
+                    : a.ExpacterProfileId)
+                .ToList();
+
+            return await _profileRepository.FindAsync(p =>
+                profileIds.Contains(p.Id.ToString()));
+        }
+
 
         // Get a specific expected partner by Id
         public async Task<PartnerExpectation> GetExpectedPartnerAsync(string Id)

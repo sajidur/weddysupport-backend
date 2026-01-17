@@ -1246,12 +1246,22 @@ namespace IWeddySupport.Controller
             var userId = user.FindFirst("Id")?.Value;
             var email = user.FindFirst("Email")?.Value;
             var partners = await _userService.GetExpectedPartnersByKeyAsync(keyViewModel, userId);
+            var existingPartners=await _userService.GetAllExpectedProfileAsync(userId);    
             if (partners == null)
             {
                 return NotFound("Partner preferences not found for the given UserId.");
             }
+            // Exclude existing partners
+            var existingPartnerIds = existingPartners
+                .Select(p => p.Id)
+                .ToHashSet();
 
-            return Ok(partners);
+            var filteredPartners = partners
+                .Where(p => !existingPartnerIds.Contains(p.Id))
+                .ToList();
+
+            return Ok(filteredPartners);
+           
         }
 
         // Create a new expected partner
