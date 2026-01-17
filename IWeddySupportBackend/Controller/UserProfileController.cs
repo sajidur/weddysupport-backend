@@ -710,7 +710,6 @@ namespace IWeddySupport.Controller
             }
         }
 
-
         [HttpDelete("deleteProfile")]
         public async Task<IActionResult> DeleteProfile(string id)
         {

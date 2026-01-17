@@ -64,7 +64,7 @@ namespace IWeddySupport.Service
         Task<UserRequest> UpdatedUserRequestAsync(UserRequest us);
         Task<List<UserRequest>> GetAllRequestedProfileAsyncByMe(string id);
         Task<List<UserRequest>> GetAllRequestedProfileAsyncForMe(string id);
-        Task<UserRequest> GetUserRequestAsync(string userId, string profileId,string expecterProfileId);
+        Task<UserRequest> GetUserRequestAsync(string userId, string profileId, string expecterProfileId);
     }
 
     public class UserService : IUserService
@@ -239,7 +239,7 @@ namespace IWeddySupport.Service
         }
         public async Task<UserRequest> GetUserRequestAsync(string userId, string profileId, string expecterProfileId)
         {
-            var users = await _userRequestReository.FindAsync(a => a.RequesterProfileId == profileId && a.RequesterUserId == userId&&a.ExpacterProfileId==expecterProfileId);
+            var users = await _userRequestReository.FindAsync(a => a.RequesterProfileId == profileId && a.RequesterUserId == userId && a.ExpacterProfileId == expecterProfileId);
             if (users.Any())
             {
                 return users.FirstOrDefault();
@@ -310,6 +310,11 @@ namespace IWeddySupport.Service
             if (devicetoken != null)
             {
                 await _userDeviceRepository.RemoveAsync(devicetoken.FirstOrDefault());
+            }
+            var userRequests = await _userRequestReository.FindAsync(a => a.RequesterProfileId == profile.Id.ToString() || a.ExpacterProfileId == profile.Id.ToString());
+            if (userRequests != null)
+            {
+                await _userRequestReository.RemoveRangeAsync(userRequests);
             }
             await _profileRepository.RemoveAsync(profile);
             return profile;
