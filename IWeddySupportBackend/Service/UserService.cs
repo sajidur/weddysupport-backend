@@ -14,6 +14,7 @@ namespace IWeddySupport.Service
     public interface IUserService
     {
         Task<IEnumerable<Profile>> GetAllExpectedProfileAsync(string userId);
+        Task<UserRequest> GetUserRequestByRequesterId(string userId, string requesterId);
         Task<Profile> GetProfileByUserIdAsync(string userId, string profileId);
         Task<UserDevice> GetUserDeviceByUserIdAsync(string userId, string ProfileId);
         Task<UserDevice> CreateUserDeviceAsync(UserDevice userDevice);
@@ -91,6 +92,15 @@ namespace IWeddySupport.Service
         public async Task<UserRequest> GetExpecterProfileRequest(string userId, string expecterProfileId)
         {
             var requests = await _userRequestReository.FindAsync(a => a.RequesterUserId == userId && a.ExpacterProfileId == expecterProfileId);
+            if (requests.Any())
+            {
+                return requests.FirstOrDefault();
+            }
+            return null;
+        }
+        public async Task<UserRequest> GetUserRequestByRequesterId(string userId, string requesterId)
+        {
+            var requests = await _userRequestReository.FindAsync(a => a.ExpacterUserId == userId && a.RequesterProfileId == requesterId);
             if (requests.Any())
             {
                 return requests.FirstOrDefault();

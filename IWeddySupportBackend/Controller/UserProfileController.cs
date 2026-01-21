@@ -710,6 +710,34 @@ namespace IWeddySupport.Controller
             }
         }
 
+        [HttpDelete("deleteUserRequestFromExpecter")]
+        public async Task<IActionResult> deleteUserRequestFromExpecter(string requesterProfileId)
+        {
+            if (string.IsNullOrWhiteSpace(requesterProfileId))
+            {
+                return BadRequest("Profile ID cannot be null or empty.");
+            }
+            try
+            {
+                var user = HttpContext.User;
+                // Optionally retrieve user ID if needed
+                var userId = user.FindFirst("Id")?.Value;
+                var existedRequest = await _userService.GetUserRequestByRequesterId(userId, requesterProfileId);
+                var isDeleted = await _userService.DeleteUserRequest(existedRequest);
+                if (isDeleted == null)
+                {
+                    return StatusCode(500, "Failed to delete the user request.");
+                }
+
+                return Ok("Deleted data successfully!");
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
+        }
+
+
         [HttpDelete("deleteProfile")]
         public async Task<IActionResult> DeleteProfile(string id)
         {
