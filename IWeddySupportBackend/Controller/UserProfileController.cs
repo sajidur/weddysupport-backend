@@ -1087,7 +1087,7 @@ namespace IWeddySupport.Controller
             try
             {
                 // Fetch the existing photo record
-                var existingPhoto = await _userService.GetProfilePhotoAsync(id);
+                var existingPhoto = await _userService.GetProfilePhotoByProfileIdAsync(id);
                 if (existingPhoto == null)
                 {
                     return NotFound(new { message = "Profile photo not found." });
