@@ -136,7 +136,7 @@ namespace IWeddySupport.Controller
                         Profile1.ExpecterName = expacterProfile.FullName;
                         Profile1.ExpecterEmail = expacterProfile.Email;
                     }
-                    var photos = await _userService.GetProfilePhotoAsync(profile.ExpacterProfileId);
+                    var photos = await _userService.GetProfilePhotoByProfileIdAsync(profile.ExpacterProfileId);
                     if (photos != null)
                     {
                         Profile1.ExpecterPhotoUrl = photos.PhotoUrl;
@@ -161,7 +161,7 @@ namespace IWeddySupport.Controller
                     Profile2.UserRequestRejected = profile.UserRequestRejected;
                     Profile2.UserRequestAccepted = profile.UserRequestAccepted;
                     Profile2.Message = profile.Message;
-                    var photos = await _userService.GetProfilePhotoAsync(profile.RequesterProfileId);
+                    var photos = await _userService.GetProfilePhotoByProfileIdAsync(profile.RequesterProfileId);
                     if (photos != null)
                     {
                         Profile2.RequesterPhotoUrl = photos.PhotoUrl;
