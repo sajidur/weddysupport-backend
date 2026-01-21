@@ -398,7 +398,7 @@ namespace IWeddySupport.Service
         // Delete a profile photo by ID
         public async Task<ProfilePhoto> DeleteProfilePhotoAsync(string id)
         {
-            var profilePhotos = await _profilePhotoRepository.FindAsync(p => p.Id == Guid.Parse(id));
+            var profilePhotos = await _profilePhotoRepository.FindAsync(p => p.ProfileId == id);
             if (profilePhotos == null || !profilePhotos.Any())
             {
                 return null;
