@@ -385,7 +385,8 @@ namespace IWeddySupport.Service
             var profilePhotos = await _profilePhotoRepository.FindAsync(p => p.Id == Guid.Parse(id));
             return profilePhotos.FirstOrDefault();
         }
-     
+       
+
 
         // Update a profile photo
         public async Task<ProfilePhoto> UpdateProfilePhotoAsync(ProfilePhoto profilePhoto)

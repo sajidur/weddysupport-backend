@@ -991,16 +991,16 @@ namespace IWeddySupport.Controller
 
         // PUT: api/ProfilePhoto/updateProfilePhoto
         [HttpPut("updateProfilePhoto")]
-        public async Task<IActionResult> UpdateProfilePhotoAsync(IFormFile file, string photoId)
+        public async Task<IActionResult> UpdateProfilePhotoAsync(IFormFile file, string profileId)
         {
             if (file == null || file.Length == 0)
             {
                 return BadRequest(new { message = "No file uploaded or the file is empty." });
             }
 
-            if (string.IsNullOrWhiteSpace(photoId))
+            if (string.IsNullOrWhiteSpace(profileId))
             {
-                return BadRequest(new { message = "Photo ID is required." });
+                return BadRequest(new { message = "Profile ID is required." });
             }
 
             // Validate file extension
@@ -1015,7 +1015,7 @@ namespace IWeddySupport.Controller
             try
             {
                 // Fetch the existing profile photo record using the provided photo ID
-                var existingPhoto = await _userService.GetProfilePhotoAsync(photoId);
+                var existingPhoto = await _userService.GetProfilePhotoByProfileIdAsync(profileId);
                 if (existingPhoto == null)
                 {
                     return NotFound(new { message = "Profile photo not found." });
