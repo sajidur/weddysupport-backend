@@ -280,6 +280,7 @@ namespace IWeddySupport.Controller
 
             var ussR = await _userService.AddUserRequestAsync(usr);
             // 🔔 Push Notification
+            try { 
             await _notificationService.SendAsync(
                 accepterUserDevice?.FCMToken,
                 usR.Title,//title
@@ -290,6 +291,17 @@ namespace IWeddySupport.Controller
         { "requestUserId", userId },
         { "requesterProfileId", usR.RequesterProfileId.ToString() }
                 });
+            }
+            catch (Exception ex)
+            {
+                // Log the exception (assuming a logger is configured)
+                return Ok( new
+                {
+                    message = "There is an issue in sendig notification.",
+                    error = ex.Message,
+                    UserRequest = ussR
+                });
+            }       
             return Ok(new
             {
                 DeviceToken = accepterUserDevice?.FCMToken,
