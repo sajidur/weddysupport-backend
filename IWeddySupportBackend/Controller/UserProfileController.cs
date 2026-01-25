@@ -711,9 +711,8 @@ namespace IWeddySupport.Controller
                 var isDeleted = await _userService.DeleteUserRequest(existedRequest);
                 if (isDeleted == null)
                 {
-                    return StatusCode(500, "Failed to delete the user request.");
+                    return BadRequest("Failed to delete the user request.");
                 }
-
                 return Ok("Deleted data successfully!");
             }
             catch (KeyNotFoundException ex)
@@ -738,7 +737,7 @@ namespace IWeddySupport.Controller
                 var isDeleted = await _userService.DeleteUserRequest(existedRequest);
                 if (isDeleted == null)
                 {
-                    return StatusCode(500, "Failed to delete the user request.");
+                    return BadRequest("Failed to delete the user request.");
                 }
 
                 return Ok("Deleted data successfully!");
